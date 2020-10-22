@@ -203,7 +203,11 @@ cor(datos2$arr_delay, datos2$dep_delay, use="complete.obs")
 
 ```{r, eval=FALSE}
 #- Diagrama bivariante 
-smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
+smoothScatter(datos2$arr_delay, 
+              datos2$dep_delay, 
+              xlab="Retraso llegada", 
+              ylab="Retraso salida", 
+              main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
 ```
 
 <details><summary>Result</summary>
@@ -211,7 +215,11 @@ smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="
 
 ```{r, echo=FALSE}
 #- Diagrama bivariante 
-smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
+smoothScatter(datos2$arr_delay, 
+              datos2$dep_delay, 
+              xlab="Retraso llegada", 
+              ylab="Retraso salida", 
+              main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
 ```
 
 </p>

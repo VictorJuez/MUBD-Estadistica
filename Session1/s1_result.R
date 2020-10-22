@@ -344,7 +344,11 @@ cor(datos2$arr_delay, datos2$dep_delay, use="complete.obs")
   # 0.91 -> observamos que hay una relacion directa (>1) y con alta intensidad (muy cerca del 1)
 
 #- Diagrama bivariante 
-smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
+smoothScatter(datos2$arr_delay, 
+              datos2$dep_delay, 
+              xlab="Retraso llegada", 
+              ylab="Retraso salida", 
+              main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
 
 # 2. Realiza la descriptiva del retraso en la llegada segun el mes del a?o
 # Haz el summary del retraso segun el mes y el boxplot estratificado

@@ -260,7 +260,11 @@ intensidad (muy cerca del 1)*
 
 ``` r
 #- Diagrama bivariante 
-smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
+smoothScatter(datos2$arr_delay, 
+              datos2$dep_delay, 
+              xlab="Retraso llegada", 
+              ylab="Retraso salida", 
+              main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
 ```
 
 <details>
