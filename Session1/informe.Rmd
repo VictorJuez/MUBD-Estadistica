@@ -23,7 +23,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 2.  Modificar el consumo del fiat punto a 4.5
 
-```{r consumos, class.output = "bg-info"}
+```{r, eval=FALSE}
 
 #1
 marcas <- c("audi","volkswagen","bmw", "renault", "fiat")
@@ -36,6 +36,25 @@ df1$consumos[5] <- 4.5
 df1
 ```
 
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+
+#1
+marcas <- c("audi","volkswagen","bmw", "renault", "fiat")
+modelos <- c("A3", "Polo", "X5", "megane", "punto")
+consumos <- c(6.8, 6.8, 12.5, 4.7, 5.0)
+df1 <- data.frame(marcas, modelos, consumos)
+
+#2
+df1$consumos[5] <- 4.5
+df1
+```
+
+</p>
+</details>
+
 ## Ejercicio 1.2
 1. Leer el fichero flights.txt cambiando los parametros de lectura oportunos y guardar en datos2 (OJO con el simbolo de los missings)
 2. Inspeccionar los datos: num. filas y columnas, visualizar los datos y descriptiva global
@@ -46,7 +65,7 @@ df1
 datos2 = read.table('flights.txt',header=TRUE,sep='\t',dec = '.', na.strings = "@", stringsAsFactors = TRUE)
 ```
 
-```{r, class.output = "bg-info"}
+```{r, eval=FALSE}
 #2
 dim(datos2)
 # View(datos2) # No se ejecuta porque el resultado es  demasiado grande para imprimirlo en el informe
@@ -56,6 +75,23 @@ summary(datos2)
 sel.flight = which(datos2$flight==251 & datos2$tailnum=="N855UA")
 datos2[sel.flight, "air_time"]
 ```
+
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#2
+dim(datos2)
+# View(datos2) # No se ejecuta porque el resultado es  demasiado grande para imprimirlo en el informe
+summary(datos2)
+
+#3
+sel.flight = which(datos2$flight==251 & datos2$tailnum=="N855UA")
+datos2[sel.flight, "air_time"]
+```
+
+</p>
+</details>
 
 ## Ejercicio 1.3
 1. Copiar los vuelos que estuvieron volando menos de 1 hora en un fichero llamado short_flights_test.txt [El fichero sin usar comillas para las categorias,sin nombre de columnas ni de filas y columnas separadas por tabuladores]
@@ -75,10 +111,34 @@ summary(datos2$air_time)
 sd(datos2$air_time,na.rm=TRUE)
 ````
 
-```{r, class.output = "bg-info"}  
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#1
+summary(datos2$air_time)
+sd(datos2$air_time,na.rm=TRUE)
+````
+
+</p>
+</details>
+
+
+```{r, eval=FALSE}  
 hist(datos2$air_time, col="blue")
 boxplot(datos2$air_time, main="Air time (minutes)")
 ```
+
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}  
+hist(datos2$air_time, col="blue")
+boxplot(datos2$air_time, main="Air time (minutes)")
+```
+
+</p>
+</details>
 
 ```{r, eval=FALSE}
 #2
@@ -87,6 +147,19 @@ prop.table(originTable)                 # Tabla proporciones
 round(100*prop.table(originTable),1)    # Tabla de proporciones redondeados
 ```
 
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#2
+originTable = table(datos2$origin)      # Tabla de frecuencias
+prop.table(originTable)                 # Tabla proporciones
+round(100*prop.table(originTable),1)    # Tabla de proporciones redondeados
+```
+
+</p>
+</details>
+
 ## Ejercicio 1.5
 1. Realiza la descriptiva del retraso en la llegada segun el retraso en la salida.
 2. Calcula la correlacion y haz el diagrama bivariante. Tambien usa la instruccion smoothScatter para hacer un plot alternativo 
@@ -94,21 +167,55 @@ round(100*prop.table(originTable),1)    # Tabla de proporciones redondeados
 ```{r, eval=FALSE}
 #1
 #- Descriptiva global de cada variable (previo al ejercicio, no necesario)
-View(datos2)
 summary(datos2$arr_delay)
 summary(datos2$dep_delay)
 ````
 
-```{r, class.output = "bg-info"}
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#1
+#- Descriptiva global de cada variable (previo al ejercicio, no necesario)
+summary(datos2$arr_delay)
+summary(datos2$dep_delay)
+````
+
+</p>
+</details>
+
+```{r, eval=FALSE}
 #- Correlacion entre las variables
 cor(datos2$arr_delay, datos2$dep_delay, use="complete.obs")
 ```
-  *0.91 -> observamos que hay una relacion directa (>1) y con alta intensidad (muy cerca del 1)*
 
-```{r, class.output = "bg-info"}
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#- Correlacion entre las variables
+cor(datos2$arr_delay, datos2$dep_delay, use="complete.obs")
+```
+ *0.91 -> observamos que hay una relacion directa (>1) y con alta intensidad (muy cerca del 1)*
+
+</p>
+</details>
+
+```{r, eval=FALSE}
 #- Diagrama bivariante 
 smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
 ```
+
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+#- Diagrama bivariante 
+smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="Retraso salida", main="Relacion del retraso de llegada y el retraso de salida")  # Grafico bivariante
+```
+
+</p>
+</details>
 
 3. Realiza la descriptiva del retraso en la llegada segun el mes del a?o
 4. Haz el summary del retraso segun el mes y el boxplot estratificado
@@ -121,10 +228,38 @@ smoothScatter(datos2$arr_delay, datos2$dep_delay, xlab="Retraso llegada", ylab="
 tapply(datos2$arr_delay, datos2$month, summary)
 ```
 
-```{r, class.output = "bg-info"}
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+# Analisi de variables
+  # arr_delay: variable Numerica Continua
+  # month: variable Categorica Ordinal?
+
+tapply(datos2$arr_delay, datos2$month, summary)
+```
+
+</p>
+</details>
+
+```{r, eval=FALSE}
 boxplot(datos2$arr_delay~datos2$month, 
         xlab="Mes",
         ylab="Retraso de llegada (min.)",
         main="Retraso de llegada segun el mes")
 
 ```
+
+<details><summary>Result</summary>
+<p>
+
+```{r, echo=FALSE}
+boxplot(datos2$arr_delay~datos2$month, 
+        xlab="Mes",
+        ylab="Retraso de llegada (min.)",
+        main="Retraso de llegada segun el mes")
+
+```
+
+</p>
+</details>
