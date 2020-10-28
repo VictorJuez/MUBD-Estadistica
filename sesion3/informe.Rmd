@@ -1,0 +1,125 @@
+---
+title: "MUBD - Estadistica - Sesion 3: Modelo Lineal"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# 1. Lectura de datos y descriptiva
+
+## Lectura e inspección de los datos
+```{r echo=FALSE}
+
+setwd('/Users/victorjuez/Google Drive/Documents/Documents academics/MUBD/Estadistica/sesion3')
+
+```
+```{r}
+datos <- read.table('Concrete_train.txt',sep="\t",header=TRUE)
+dim(datos)                  # num filas y columnas
+datos[1:5,]                 # ver datos
+summary(datos)              # descriptiva de todas las variables 
+boxplot(datos, las=2)       # boxplot de todas las variables
+```
+
+En este último gráfico vemos como se distribuyen las distintas características. Podemos observar como algunas lo hacen de forma normal (Cement, CoarseAggregate, FineAggregate). Y otras no (FlyAsh, Age, Superplasticizer). Posteriormente veremos diferentes filtros para intentar normalizarlas todas.
+
+## Explorar todos los pares de datos
+```{r}
+pairs(datos) # descriptiva bivariante
+```
+Con este gráfico, podemos ver como se relacionan todas las características entre ellas una a una. 
+De todas ellas nos interesa ver como se relaciona cada una de las características con la variable resultado (Strenght). 
+A simple vista, la que parece tener la relación lineal más clara con Strenght es el Cemento (cuando este incrementa, también lo hace la Dureza)
+
+## Descriptiva bivariante para la variable Cemento
+```{r}
+plot(Strength~Cement,datos)                       # puntos
+with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de la relacion
+```
+Con esta estimación (linea roja), afirmamos pues, que la relación es lineal
+
+## Descriptiva bivariante para todas las variables
+```{r}
+par(mfrow=c(2,4))
+for(i in 1:8){
+  plot(datos$Strength~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="Strength")
+  with(datos,lines(lowess(Strength~datos[,i]),col=2))
+}
+```
+Ahora, con todas las otras características, vemos que algunas tinenen curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una relación lineal.
+Y otras sí, como el superplasticizer o el CoarseAggregate
+
+# 2. Ajuste del Modelo
+
+## Ajuste del Modelo lineal simple
+```{r}
+mod.lm0 <- lm(Strength~Cement,datos)
+summary(mod.lm0)
+```
+
+- **Residuals**: descriptiva de los residuos (errores). 
+- **Coeficientes**:
+  - *Estimate*: coeficientes del termino independiente (intercept) y el cemento. Por cada unidad de cemento que yo agrego, la dureza augmenta en 0.08 uds.
+  - *Std. Error*: Error estándar de la estimación, en el caso del Cemento, estimamos un valor de 0,08 pero con un error de +- 0.005
+  - *t value*: Es la relación que hay entre la Estimación y el Std. Error (Estimación/Error). Nos interesa que sea lo mayor posible, lo que signfica que hay un error pequeno
+  - *Pr(>|t|)*: P-valor de los coeficientes. Utiliza el t-valor para hacerlo. Un valor muy pequeno de este (< 0.05) implica que descartamos la hipótesis nula, es decir, que el coeficiente sea 0. Dicho de otra forma, en el caso del cemento, implica que éste está influyendo sobre la variable respuesta (Dureza). Nos aseguramos que no es un coeficiente igual a 0, lo que por contra, significaría que el cemento no tiene ningún impacto sobre la Dureza (por cada unidad de cemento que agrego, la dureza varia +- 0) y por tanto no deberíamos utilizarla como característica del modelo.
+- **Signif. codes**: el R nos ayuda y directamente nos califica cada coeficiente según si son más o menos significativos: `0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1`.
+  - p-valor entre (0 y 0.001): `***`
+  - p-valor entre (0.001 y 0.01): `**`,
+  - p-valor entre (0.01 y 0.05): `*`,
+  - p-valor entre (0.05 y 0.1): `.`,
+  - p-valor entre (0.1 y 1): ` `
+- **Residual standard error**: Como la media de los residuos, lo que espero equivocarme utilizando el modelo
+- **Multiple R-squared**: $R^2$ Es el porcentaje de variabilidad que explica el modelo. Cerca de 0 no explica nada, cerca del 1 explica mucho. En este caso, considerando que tenemos una única variable (Cemento), un valor de 0.25 está bastante bien, podemos explicar un 25% de la dureza utilizando el cemento. 
+- **F-static**: si el modelo en general explica algo o no
+
+```{r}
+par(mfrow=c(1,1))
+plot(Strength~Cement,datos)
+abline(mod.lm0,col="red")
+```
+La línea roja es el modelo lineal 
+
+## Ajuste del modelo multivariado
+
+```{r}
+mod.lm1 <- lm(Strength~Cement + BlastFurnaceSlag + FlyAsh +      
+                       Water + Superplasticizer + CoarseAggregate +
+                       FineAggregate + Age,datos)                   # Ajuste del modelo
+# mod.lm1 <- lm(Strength~.,datos)                                     # Instruccion equivalente a la anterior
+mod.lm1                                                             # Ver coeficientes
+summary(mod.lm1)                                                    # Resumen del modelo
+```
+- Análisis rápido de la estimación: por cada unidad de cemento que agreguemos, la dureza augmentará 0.125. En cambio, por cada unidad de agua que agreguemos, la dureza se reducirá en 0.13
+- A simple vista ya vemos las variables más significativas, con tres estrellas (Cemento, FlyAsh, Age..) y las menos (FineAggregate, CoarseAggregate).
+- Importante destacar el R-squared: ha augmentado considerablemente (0.6253) en comparación al 0.25 que teníamos en el modelo anterior con solo el Cemento como variable. Ésto nos indica que ahora con éste modelo que contiene todas las variables podemos explicar un 63% la dureza
+
+## Selección automática de variables
+
+```{r}
+mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
+```
+- AIC: Se mira cuan bueno es el modelo y por otra parte el numero de parámetros que tiene el modelo. Nos interesa que el modelo sea lo más bueno posible (verosimilitud) con el mínimo de variables posibles. Cuanto más pequeno es el AIC mejor.
+- En la tabla anterior observamos el AIC resultante por cada variable que quitamos al modelo. En este caso, si NO quitamos ninguna, tenemos el valor más pequeno del AIC, que es lo que buscamos.
+
+
+```{r}
+summary(mod.lm2)                           # Modelo con variables seleccionadas
+```
+Al no quitar ninguna variable, tenemos el mismo modelo que el anterior (lm1)
+
+## Validación de las premisas
+Premisas:
+- **Linealidad**: Una recta/plano/hiperplano se ajusta bien a los datos
+- **Homoscedasticidad**: Variabilidad constante
+- **Normalidad de los residuos**: Los errores son normales
+- **Independencia**: La muestra es aleatoria simple y el resultado de una observación no condiciona el resto
+
+```{r}
+par(mfrow=c(2,2))                          # ventana para 4 gr?ficos
+plot(mod.lm2)                              # graficos para valorar premisas
+```
+
+- **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para cumplirla, los residuos, deberían distribuirse de la misma forma por todo el rango de los Fitted values. Así pues, vemos que no es el caso, ya que cuando éstos son pequenos, los residuos oscilan menos (muy cercanos a la linea roja). Y en cambio cuando mayor son los Fitted values, más dispersos son los residuos
+- **Scale-Location**: 
