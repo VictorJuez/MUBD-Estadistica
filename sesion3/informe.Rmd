@@ -100,7 +100,7 @@ summary(mod.lm1)                                                    # Resumen de
 ```{r}
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
 ```
-- AIC: Se mira cuan bueno es el modelo y por otra parte el numero de parámetros que tiene el modelo. Nos interesa que el modelo sea lo más bueno posible (verosimilitud) con el mínimo de variables posibles. Cuanto más pequeno es el AIC mejor.
+- AIC: Se mira qué bueno es el modelo y por otra parte el numero de parámetros que tiene el modelo. Nos interesa que el modelo sea lo más bueno posible (verosimilitud) con el mínimo de variables posibles. Cuanto más pequeno es el AIC mejor.
 - En la tabla anterior observamos el AIC resultante por cada variable que quitamos al modelo. En este caso, si NO quitamos ninguna, tenemos el valor más pequeno del AIC, que es lo que buscamos.
 
 
@@ -121,5 +121,48 @@ par(mfrow=c(2,2))                          # ventana para 4 gr?ficos
 plot(mod.lm2)                              # graficos para valorar premisas
 ```
 
-- **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para cumplirla, los residuos, deberían distribuirse de la misma forma por todo el rango de los Fitted values. Así pues, vemos que no es el caso, ya que cuando éstos son pequenos, los residuos oscilan menos (muy cercanos a la linea roja). Y en cambio cuando mayor son los Fitted values, más dispersos son los residuos
-- **Scale-Location**: 
+
+- **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para cumplirla, los residuos, deberían distribuirse de la misma forma por todo el rango de los 'Fitted values' (estimaciones). Así pues, vemos que no es el caso, ya que cuando éstos son pequenos, los residuos oscilan menos (muy cercanos a la linea roja). Y en cambio cuando mayor son los las estimaciones, más dispersos son los residuos
+- **Scale-Location**: Con el mismo propósito que el anterior, pero estandarizando los residuos, de forma que estos son todos positivos. (Es como si plegaramos el diagrama anterior por la mitad). Con esto, nos podemos fijar en la línea roja, y en este caso observar que tiene una tendencia decreciente, es decir, que cuando mayor es la estimación más grande es el residuo (más error tenemos).
+- **Normal Q-Q**: Nos sirve para ver si el las estimaciones estan distribuidos de forma normal o no. En este caso vemos que a excepción de valores muy pequenos y grandes sí que lo hacen.
+- [**Residuals vs Leverage**](https://boostedml.com/2019/03/linear-regression-plots-residuals-vs-leverage.html): Este gráfico nos sirve para ver como cambia la dispersión de los residuos estandarizados cuando el [leverage](https://en.wikipedia.org/wiki/Leverage_(statistics)) (puntos de influencia) incrementan. La dispersión de los residuos estandarizados no deberían cambiar cuando los puntos de influencia augmentan (nos estamos fijando en los puntos negros): en este caso parece que disminuye, lo que indica homoscedesticidad.
+  - Por otro lado los puntos con un gran 'leverage' son puntos de **gran influencia**, por lo que eliminarlos harían cambiar mucho el modelo. Para este propósito nos fijamos en la línea de Cook (la cual mesura el efecto de eliminar el valor). Todos los puntos fuera de ésta línea indican que tienen una gran influencia. En este caso vemos que no hay ninguno que esté furea la línea de Cook (de hecho la línea no llega ni a aparecer en el diagrama).
+
+
+## Nueva descriptiva: Residuos vs variables predictoras
+```{r}
+library(car)
+residualPlots(mod.lm2)
+```
+
+- Aquí podemos observar por cada característica como varia la dispersión de los residuos. Lo que buscamos, otra vez, es que ésta no varie a lo largo de los valores de cada característica. Como vemos, las características que lo cumplen son: Cement, CoarseAggregate y Water. En las otras, en cambio, observamos curvaturas lo cual indican justamente lo contrario.
+- Tendremos que aplicar transformaciones a éstas características para linealizarlas
+
+## Transformaciones polinomicas sobre las predictoras con poly
+Con poly: que se incluyen términos polinómicos de orden mayor
+
+```{r}
+mod.lm4 <- lm(Strength ~ poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2)+
+                         poly(Water,2) + poly(Superplasticizer,2) + CoarseAggregate +
+                         poly(FineAggregate,2) + poly(Age,2),datos) # generamos el nuevo modelo con las transformaciones
+summary(mod.lm4)
+```
+
+- Vemos todos los coeficientes de todas las características aplicando transformaciones polinomicas de 1er y 2o grado y la significancia de cada una de ellas. A excepción del 'CoarseAggregate', que como habiamos observado anteriormente ya seguía una forma lineal y no requeria de transformación. 
+- Por otro lado, vemos que el error estándar ha disminuido (7.92 vs 10.0) en el modelo anterior, y que el R-squared ha augmentado (0.7798 vs 0.6253), por lo que ahora podemos explicar un 0.7798 de la dureza con este modelo. En general, hemos obtenido una mejora sustancial respecto respecto al modelo anterior únicamente transformando las variables predictoras.
+
+### Selección automática de características
+Seleccionamos automáticamente las características a utilizar del modelo anterior (lm4)
+
+```{r}
+mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
+```
+
+Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya que aparaece el primero de la lista y el AIC resultante tras su eleminación es el menor de todos (2912.9), respecto (1214.9) si no elimináramos ninguna.
+
+```{r}
+summary(mod.lm5)
+```
+
+
+

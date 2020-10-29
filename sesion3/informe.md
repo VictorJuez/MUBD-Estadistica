@@ -272,7 +272,7 @@ mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
     ## - Cement            1   14285.8  85574 3403.0
     ## - Age               1   31544.5 102833 3532.8
 
-  - AIC: Se mira cuan bueno es el modelo y por otra parte el numero de
+  - AIC: Se mira qué bueno es el modelo y por otra parte el numero de
     parámetros que tiene el modelo. Nos interesa que el modelo sea lo
     más bueno posible (verosimilitud) con el mínimo de variables
     posibles. Cuanto más pequeno es el AIC mejor.
@@ -330,10 +330,210 @@ par(mfrow=c(2,2))                          # ventana para 4 gr?ficos
 plot(mod.lm2)                              # graficos para valorar premisas
 ```
 
-![](informe_files/figure-gfm/unnamed-chunk-11-1.png)<!-- --> -
-**Residuals vs Fitted**: Nos indica la Homoscedasticidad, para
-cumplirla, los residuos, deberían distribuirse de la misma forma por
-todo el rango de los Fitted values. Así pues, vemos que no es el caso,
-ya que cuando éstos son pequenos, los residuos oscilan menos (muy
-cercanos a la linea roja). Y en cambio cuando mayor son los Fitted
-values, más dispersos son los residuos
+![](informe_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+  - **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para
+    cumplirla, los residuos, deberían distribuirse de la misma forma por
+    todo el rango de los ‘Fitted values’ (estimaciones). Así pues, vemos
+    que no es el caso, ya que cuando éstos son pequenos, los residuos
+    oscilan menos (muy cercanos a la linea roja). Y en cambio cuando
+    mayor son los las estimaciones, más dispersos son los residuos
+  - **Scale-Location**: Con el mismo propósito que el anterior, pero
+    estandarizando los residuos, de forma que estos son todos positivos.
+    (Es como si plegaramos el diagrama anterior por la mitad). Con esto,
+    nos podemos fijar en la línea roja, y en este caso observar que
+    tiene una tendencia decreciente, es decir, que cuando mayor es la
+    estimación más grande es el residuo (más error tenemos).
+  - **Normal Q-Q**: Nos sirve para ver si el las estimaciones estan
+    distribuidos de forma normal o no. En este caso vemos que a
+    excepción de valores muy pequenos y grandes sí que lo hacen.
+  - [**Residuals vs
+    Leverage**](https://boostedml.com/2019/03/linear-regression-plots-residuals-vs-leverage.html):
+    Este gráfico nos sirve para ver como cambia la dispersión de los
+    residuos estandarizados cuando el
+    [leverage](https://en.wikipedia.org/wiki/Leverage_\(statistics\))
+    (puntos de influencia) incrementan. La dispersión de los residuos
+    estandarizados no deberían cambiar cuando los puntos de influencia
+    augmentan (nos estamos fijando en los puntos negros): en este caso
+    parece que disminuye, lo que indica homoscedesticidad.
+      - Por otro lado los puntos con un gran ‘leverage’ son puntos de
+        **gran influencia**, por lo que eliminarlos harían cambiar mucho
+        el modelo. Para este propósito nos fijamos en la línea de Cook
+        (la cual mesura el efecto de eliminar el valor). Todos los
+        puntos fuera de ésta línea indican que tienen una gran
+        influencia. En este caso vemos que no hay ninguno que esté furea
+        la línea de Cook (de hecho la línea no llega ni a aparecer en el
+        diagrama).
+
+## Nueva descriptiva: Residuos vs variables predictoras
+
+``` r
+library(car)
+residualPlots(mod.lm2)
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+    ##                  Test stat Pr(>|Test stat|)    
+    ## Cement             -2.1451        0.0322934 *  
+    ## BlastFurnaceSlag   -3.9334        9.213e-05 ***
+    ## FlyAsh             -4.4095        1.200e-05 ***
+    ## Water               1.3204        0.1871504    
+    ## Superplasticizer   -6.4614        1.950e-10 ***
+    ## CoarseAggregate    -0.1279        0.8982890    
+    ## FineAggregate      -3.4735        0.0005456 ***
+    ## Age               -18.0269        < 2.2e-16 ***
+    ## Tukey test         -5.5063        3.664e-08 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+  - Aquí podemos observar por cada característica como varia la
+    dispersión de los residuos. Lo que buscamos, otra vez, es que ésta
+    no varie a lo largo de los valores de cada característica. Como
+    vemos, las características que lo cumplen son: Cement,
+    CoarseAggregate y Water. En las otras, en cambio, observamos
+    curvaturas lo cual indican justamente lo contrario.
+  - Tendremos que aplicar transformaciones a éstas características para
+    linealizarlas
+
+## Transformaciones polinomicas sobre las predictoras con poly
+
+Con poly: que se incluyen términos polinómicos de orden mayor
+
+``` r
+mod.lm4 <- lm(Strength ~ poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2)+
+                         poly(Water,2) + poly(Superplasticizer,2) + CoarseAggregate +
+                         poly(FineAggregate,2) + poly(Age,2),datos) # generamos el nuevo modelo con las transformaciones
+summary(mod.lm4)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 
+    ##     2) + poly(FlyAsh, 2) + poly(Water, 2) + poly(Superplasticizer, 
+    ##     2) + CoarseAggregate + poly(FineAggregate, 2) + poly(Age, 
+    ##     2), data = datos)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -23.851  -4.481  -0.141   4.931  29.541 
+    ## 
+    ## Coefficients:
+    ##                              Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                 3.254e+01  9.090e+00   3.579 0.000369 ***
+    ## poly(Cement, 2)1            2.978e+02  2.296e+01  12.971  < 2e-16 ***
+    ## poly(Cement, 2)2           -6.135e+00  8.680e+00  -0.707 0.479957    
+    ## poly(BlastFurnaceSlag, 2)1  2.028e+02  2.273e+01   8.919  < 2e-16 ***
+    ## poly(BlastFurnaceSlag, 2)2 -2.665e+01  8.401e+00  -3.172 0.001580 ** 
+    ## poly(FlyAsh, 2)1            7.784e+01  2.214e+01   3.516 0.000466 ***
+    ## poly(FlyAsh, 2)2           -2.274e+01  8.576e+00  -2.651 0.008201 ** 
+    ## poly(Water, 2)1            -1.047e+02  2.236e+01  -4.683 3.40e-06 ***
+    ## poly(Water, 2)2             3.500e+01  9.764e+00   3.585 0.000361 ***
+    ## poly(Superplasticizer, 2)1  3.549e+01  1.487e+01   2.386 0.017294 *  
+    ## poly(Superplasticizer, 2)2 -5.765e+01  9.853e+00  -5.851 7.53e-09 ***
+    ## CoarseAggregate             2.749e-03  9.339e-03   0.294 0.768617    
+    ## poly(FineAggregate, 2)1     8.681e+00  2.264e+01   0.383 0.701496    
+    ## poly(FineAggregate, 2)2    -4.201e+01  9.126e+00  -4.604 4.93e-06 ***
+    ## poly(Age, 2)1               1.822e+02  8.453e+00  21.549  < 2e-16 ***
+    ## poly(Age, 2)2              -1.506e+02  7.937e+00 -18.969  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.792 on 690 degrees of freedom
+    ## Multiple R-squared:  0.7798, Adjusted R-squared:  0.775 
+    ## F-statistic: 162.9 on 15 and 690 DF,  p-value: < 2.2e-16
+
+  - Vemos todos los coeficientes de todas las características aplicando
+    transformaciones polinomicas de 1er y 2o grado y la significancia de
+    cada una de ellas. A excepción del ‘CoarseAggregate’, que como
+    habiamos observado anteriormente ya seguía una forma lineal y no
+    requeria de transformación.
+  - Por otro lado, vemos que el error estándar ha disminuido (7.92 vs
+    10.0) en el modelo anterior, y que el R-squared ha augmentado
+    (0.7798 vs 0.6253), por lo que ahora podemos explicar un 0.7798 de
+    la dureza con este modelo. En general, hemos obtenido una mejora
+    sustancial respecto respecto al modelo anterior únicamente
+    transformando las variables predictoras.
+
+### Selección automática de características
+
+Seleccionamos automáticamente las características a utilizar del modelo
+anterior (lm4)
+
+``` r
+mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
+```
+
+    ## Start:  AIC=2914.8
+    ## Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 2) + poly(FlyAsh, 
+    ##     2) + poly(Water, 2) + poly(Superplasticizer, 2) + CoarseAggregate + 
+    ##     poly(FineAggregate, 2) + poly(Age, 2)
+    ## 
+    ##                             Df Sum of Sq   RSS    AIC
+    ## - CoarseAggregate            1         5 41900 2912.9
+    ## <none>                                   41894 2914.8
+    ## - poly(FineAggregate, 2)     2      1288 43183 2932.2
+    ## - poly(FlyAsh, 2)            2      1291 43186 2932.2
+    ## - poly(Superplasticizer, 2)  2      2154 44049 2946.2
+    ## - poly(Water, 2)             2      2259 44153 2947.9
+    ## - poly(BlastFurnaceSlag, 2)  2      5091 46986 2991.8
+    ## - poly(Cement, 2)            2     10217 52111 3064.9
+    ## - poly(Age, 2)               2     51197 93092 3474.5
+    ## 
+    ## Step:  AIC=2912.89
+    ## Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 2) + poly(FlyAsh, 
+    ##     2) + poly(Water, 2) + poly(Superplasticizer, 2) + poly(FineAggregate, 
+    ##     2) + poly(Age, 2)
+    ## 
+    ##                             Df Sum of Sq   RSS    AIC
+    ## <none>                                   41900 2912.9
+    ## - poly(FineAggregate, 2)     2      1305 43205 2930.6
+    ## - poly(FlyAsh, 2)            2      1684 43584 2936.7
+    ## - poly(Superplasticizer, 2)  2      2150 44050 2944.2
+    ## - poly(Water, 2)             2      5547 47447 2996.7
+    ## - poly(BlastFurnaceSlag, 2)  2     14386 56286 3117.3
+    ## - poly(Cement, 2)            2     28692 70591 3277.2
+    ## - poly(Age, 2)               2     51460 93360 3474.5
+
+Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya
+que aparaece el primero de la lista y el AIC resultante tras su
+eleminación es el menor de todos (2912.9), respecto (1214.9) si no
+elimináramos ninguna.
+
+``` r
+summary(mod.lm5)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 
+    ##     2) + poly(FlyAsh, 2) + poly(Water, 2) + poly(Superplasticizer, 
+    ##     2) + poly(FineAggregate, 2) + poly(Age, 2), data = datos)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -23.7961  -4.4395  -0.1394   4.9763  29.5278 
+    ## 
+    ## Coefficients:
+    ##                             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                  35.2095     0.2931 120.142  < 2e-16 ***
+    ## poly(Cement, 2)1            292.3493    13.4585  21.722  < 2e-16 ***
+    ## poly(Cement, 2)2             -6.1698     8.6738  -0.711 0.477133    
+    ## poly(BlastFurnaceSlag, 2)1  197.2719    13.0097  15.163  < 2e-16 ***
+    ## poly(BlastFurnaceSlag, 2)2  -26.3240     8.3224  -3.163 0.001630 ** 
+    ## poly(FlyAsh, 2)1             73.2990    15.8765   4.617 4.65e-06 ***
+    ## poly(FlyAsh, 2)2            -23.1851     8.4352  -2.749 0.006141 ** 
+    ## poly(Water, 2)1            -110.2495    12.2046  -9.033  < 2e-16 ***
+    ## poly(Water, 2)2              34.6832     9.6968   3.577 0.000372 ***
+    ## poly(Superplasticizer, 2)1   34.0869    14.0778   2.421 0.015721 *  
+    ## poly(Superplasticizer, 2)2  -57.6252     9.8460  -5.853 7.47e-09 ***
+    ## poly(FineAggregate, 2)1       2.9844    11.7326   0.254 0.799288    
+    ## poly(FineAggregate, 2)2     -41.9568     9.1175  -4.602 4.98e-06 ***
+    ## poly(Age, 2)1               182.1311     8.4469  21.562  < 2e-16 ***
+    ## poly(Age, 2)2              -150.7945     7.8900 -19.112  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.787 on 691 degrees of freedom
+    ## Multiple R-squared:  0.7798, Adjusted R-squared:  0.7753 
+    ## F-statistic: 174.8 on 14 and 691 DF,  p-value: < 2.2e-16

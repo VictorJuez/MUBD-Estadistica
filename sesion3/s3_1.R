@@ -100,7 +100,7 @@ residualPlots(mod.lm2)
 ##- Con poly se incluyen terminos polinomicos de orden mayor
 mod.lm4 <- lm(Strength ~ poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2)+
                          poly(Water,2) + poly(Superplasticizer,2) + CoarseAggregate +
-                         poly(FineAggregate,2) + poly(Age,2),datos)
+                         poly(FineAggregate,2) + poly(Age,2),datos) # generamos el nuevo modelo con las transformaciones
 summary(mod.lm4)
 
 mod.lm5 <- step(mod.lm4)
