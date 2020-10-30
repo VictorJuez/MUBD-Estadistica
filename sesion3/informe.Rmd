@@ -3,6 +3,8 @@ title: "MUBD - Estadistica - Sesion 3: Modelo Lineal"
 output: github_document
 ---
 
+Documentación: [MUBD-3.1.Modelo-lineal.pdf]()
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -28,6 +30,7 @@ En este último gráfico vemos como se distribuyen las distintas característica
 ```{r}
 pairs(datos) # descriptiva bivariante
 ```
+
 Con este gráfico, podemos ver como se relacionan todas las características entre ellas una a una. 
 De todas ellas nos interesa ver como se relaciona cada una de las características con la variable resultado (Strenght). 
 A simple vista, la que parece tener la relación lineal más clara con Strenght es el Cemento (cuando este incrementa, también lo hace la Dureza)
@@ -37,6 +40,7 @@ A simple vista, la que parece tener la relación lineal más clara con Strenght 
 plot(Strength~Cement,datos)                       # puntos
 with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de la relacion
 ```
+
 Con esta estimación (linea roja), afirmamos pues, que la relación es lineal
 
 ## Descriptiva bivariante para todas las variables
@@ -47,6 +51,7 @@ for(i in 1:8){
   with(datos,lines(lowess(Strength~datos[,i]),col=2))
 }
 ```
+
 Ahora, con todas las otras características, vemos que algunas tinenen curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una relación lineal.
 Y otras sí, como el superplasticizer o el CoarseAggregate
 
@@ -79,6 +84,7 @@ par(mfrow=c(1,1))
 plot(Strength~Cement,datos)
 abline(mod.lm0,col="red")
 ```
+
 La línea roja es el modelo lineal 
 
 ## Ajuste del modelo multivariado
@@ -91,6 +97,7 @@ mod.lm1 <- lm(Strength~Cement + BlastFurnaceSlag + FlyAsh +
 mod.lm1                                                             # Ver coeficientes
 summary(mod.lm1)                                                    # Resumen del modelo
 ```
+
 - Análisis rápido de la estimación: por cada unidad de cemento que agreguemos, la dureza augmentará 0.125. En cambio, por cada unidad de agua que agreguemos, la dureza se reducirá en 0.13
 - A simple vista ya vemos las variables más significativas, con tres estrellas (Cemento, FlyAsh, Age..) y las menos (FineAggregate, CoarseAggregate).
 - Importante destacar el R-squared: ha augmentado considerablemente (0.6253) en comparación al 0.25 que teníamos en el modelo anterior con solo el Cemento como variable. Ésto nos indica que ahora con éste modelo que contiene todas las variables podemos explicar un 63% la dureza
@@ -100,6 +107,7 @@ summary(mod.lm1)                                                    # Resumen de
 ```{r}
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
 ```
+
 - AIC: Se mira qué bueno es el modelo y por otra parte el numero de parámetros que tiene el modelo. Nos interesa que el modelo sea lo más bueno posible (verosimilitud) con el mínimo de variables posibles. Cuanto más pequeno es el AIC mejor.
 - En la tabla anterior observamos el AIC resultante por cada variable que quitamos al modelo. En este caso, si NO quitamos ninguna, tenemos el valor más pequeno del AIC, que es lo que buscamos.
 
@@ -107,6 +115,7 @@ mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
 ```{r}
 summary(mod.lm2)                           # Modelo con variables seleccionadas
 ```
+
 Al no quitar ninguna variable, tenemos el mismo modelo que el anterior (lm1)
 
 ## Validación de las premisas
@@ -120,7 +129,6 @@ Premisas:
 par(mfrow=c(2,2))                          # ventana para 4 gr?ficos
 plot(mod.lm2)                              # graficos para valorar premisas
 ```
-
 
 - **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para cumplirla, los residuos, deberían distribuirse de la misma forma por todo el rango de los 'Fitted values' (estimaciones). Así pues, vemos que no es el caso, ya que cuando éstos son pequenos, los residuos oscilan menos (muy cercanos a la linea roja). Y en cambio cuando mayor son los las estimaciones, más dispersos son los residuos
 - **Scale-Location**: Con el mismo propósito que el anterior, pero estandarizando los residuos, de forma que estos son todos positivos. (Es como si plegaramos el diagrama anterior por la mitad). Con esto, nos podemos fijar en la línea roja, y en este caso observar que tiene una tendencia decreciente, es decir, que cuando mayor es la estimación más grande es el residuo (más error tenemos).
@@ -158,11 +166,91 @@ Seleccionamos automáticamente las características a utilizar del modelo anteri
 mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
 ```
 
-Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya que aparaece el primero de la lista y el AIC resultante tras su eleminación es el menor de todos (2912.9), respecto (1214.9) si no elimináramos ninguna.
+Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya que aparece el primero de la lista y el AIC resultante tras su eleminación es el menor de todos (2912.9), respecto (1214.9) si no elimináramos ninguna.
 
 ```{r}
-summary(mod.lm5)
+summary(mod.lm5) # Descriptiva del modelo
 ```
 
+Tras eliminar el CoarseAggregate y hacer la descriptiva del modelo, podemos observar que el resultado no varia significativamente respecto el modelo anterior (lm4). El multipple R-squared se mantiene igual y solo disminuye muy levemente el error estándar.
+
+### Colinealidad
+Para analizar la colinealidad de las variables (qué tan relacionadas estan entre si) utilizamos el VIF: 
+
+- Por orden general, un VIF mayor que 5 u 8 es un valor muy grande que nos indica que hay una relación entre las características, es decir, que las características en cuestión nos explican lo mismo, por lo que no tiene sentido tenerlas juntas en el modelo.
+- Por contra, un VIF menor a 5 nos indica que las variables predictoras no estan muy relacionadas entre si. Es lo que buscamos.
+
+```{r}
+vif(mod.lm5)
+```
+
+## Validación
+```{r}
+par(mfrow=c(2,2))
+plot(mod.lm5) # Validación de las premisas
+```
+
+- **Linealidad**: Se cumple. (Residuals vs Fitted) vemos que los residuos se distribuyen uniformemente por encima y por debajo del cero a lo largo de los valores predichos. Se ve claramente con la línea roja recta en el 0.
+- **Homocedasticidad**: Se cumple. (Residuals vs Fitted) En comparación al modelo lm2, la homoscedesticidad ha mejorado un poco, ahora vemos una mejor distribución de los residuales a lo largo de las estimaciones, aunque seguimos teniendo un poco forma de embudo (residuos más concentrados en valores predichos pequenos y más dispersos en valores predichos grandes)
+- **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los residuos se ajustan bastante bien a la recta de Normalidad
+- **Independencia**: Suponemos que se cumple. (Depende del buen diseño de la recogida de datos)
 
 
+```{r}
+residualPlots(mod.lm5)
+```
+
+- En el plot de arriba tenemos el gráfico (Residuals vs Fitted) para cada característica por separado.
+- Vemos que todas cumplen la premisa de Linealidad, pero no la de Homocedasticidad, ya que en diversas características los residuos no estan distribuidos uniformemente (Age, Superplasticizer)
+- Aun así, las premisas más importantes son las del modelo completo, con todas las características, analizadas anteriormente y validadas.
+
+## Transformación BoxCox sobre la respuesta
+Transformamos ahora las estimaciones para ver si podemos mejorar aun más el modelo.
+
+### 1. Buscamos la lambda óptima
+
+```{r}
+par(mfrow=c(1,1))
+bc <- boxCox(mod.lm5)
+bc$x[which.max(bc$y)] #lambda optima la cual vamos a elevar las variables resultado (dureza) a esta lambda 
+```
+
+### 2. Transformamos las variables resultado y analizamos el modelo resultante
+
+```{r}
+lamb <- bc$x[which.max(bc$y)]  
+datos$Strength2 <- datos$Strength^lamb
+mod.lm6 <- lm(Strength2~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2) +
+                        poly(Water,2) + poly(Superplasticizer,2) +
+                        poly(FineAggregate,2) + poly(Age,2), datos)
+summary(mod.lm6)
+```
+
+Comparamos otra vez con los modelos anteriores y vemos:
+
+- El error estándar a disminuido de 7.792 en el lm4 vs 1.596 ahora
+- El multiple R-squared ha augmentado muy levemente: 0.7798 vs 0.7824 ahora
+
+### 3. Validación del modelo
+
+```{r}
+par(mfrow=c(2,2))
+plot(mod.lm6)
+```
+
+- Vemos que corregimos los problemas de normalidad, pero que seguimos teniendo parabola homesteicedad
+- Nos quedariamos con el modelo 5, que es mas simple y no deteriora ninguna premisa. A parte de que la R2 se mantiene practicamente igual.
+
+## Observaciones influyentes
+
+```{r}
+influenceIndexPlot(mod.lm5) 
+```
+
+- Análisis de observaciones:
+  - Las observaciones 81 y 147 tienen mucha influencia a posteriori
+  - La observación 248 está muy mal explicada por el modelo
+  - Las observaciones 65 y 81 tienen mucha influencia a priori.
+- **Cook's distance**: Con la distancia de Cook vemos que hay unos 3 puntos influyentes.
+- **Residuals**: no hay ningun punto que destaque, solo uno que tiene un residuo de practicamente 4, cuando deberian oscilar entre -2 y 2, pero ya está.
+- **P-valor**: vemos que ninguno llega al 0.05, solo el de 0.1 que coincide con el anterior.

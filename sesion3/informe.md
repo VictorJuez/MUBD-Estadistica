@@ -1,6 +1,8 @@
 MUBD - Estadistica - Sesion 3: Modelo Lineal
 ================
 
+Documentación: [MUBD-3.1.Modelo-lineal.pdf]()
+
 # 1\. Lectura de datos y descriptiva
 
 ## Lectura e inspección de los datos
@@ -73,13 +75,14 @@ intentar normalizarlas todas.
 pairs(datos) # descriptiva bivariante
 ```
 
-![](informe_files/figure-gfm/unnamed-chunk-3-1.png)<!-- --> Con este
-gráfico, podemos ver como se relacionan todas las características entre
-ellas una a una. De todas ellas nos interesa ver como se relaciona cada
-una de las características con la variable resultado (Strenght). A
-simple vista, la que parece tener la relación lineal más clara con
-Strenght es el Cemento (cuando este incrementa, también lo hace la
-Dureza)
+![](informe_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+Con este gráfico, podemos ver como se relacionan todas las
+características entre ellas una a una. De todas ellas nos interesa ver
+como se relaciona cada una de las características con la variable
+resultado (Strenght). A simple vista, la que parece tener la relación
+lineal más clara con Strenght es el Cemento (cuando este incrementa,
+también lo hace la Dureza)
 
 ## Descriptiva bivariante para la variable Cemento
 
@@ -88,8 +91,10 @@ plot(Strength~Cement,datos)                       # puntos
 with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de la relacion
 ```
 
-![](informe_files/figure-gfm/unnamed-chunk-4-1.png)<!-- --> Con esta
-estimación (linea roja), afirmamos pues, que la relación es lineal
+![](informe_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
+Con esta estimación (linea roja), afirmamos pues, que la relación es
+lineal
 
 ## Descriptiva bivariante para todas las variables
 
@@ -101,10 +106,12 @@ for(i in 1:8){
 }
 ```
 
-![](informe_files/figure-gfm/unnamed-chunk-5-1.png)<!-- --> Ahora, con
-todas las otras características, vemos que algunas tinenen curvatura
-(Age, Water, BlastFurnaceSlag), por ende no presentan una relación
-lineal. Y otras sí, como el superplasticizer o el CoarseAggregate
+![](informe_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+Ahora, con todas las otras características, vemos que algunas tinenen
+curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una
+relación lineal. Y otras sí, como el superplasticizer o el
+CoarseAggregate
 
 # 2\. Ajuste del Modelo
 
@@ -180,8 +187,9 @@ plot(Strength~Cement,datos)
 abline(mod.lm0,col="red")
 ```
 
-![](informe_files/figure-gfm/unnamed-chunk-7-1.png)<!-- --> La línea
-roja es el modelo lineal
+![](informe_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+La línea roja es el modelo lineal
 
 ## Ajuste del modelo multivariado
 
@@ -496,12 +504,12 @@ mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
     ## - poly(Age, 2)               2     51460 93360 3474.5
 
 Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya
-que aparaece el primero de la lista y el AIC resultante tras su
+que aparece el primero de la lista y el AIC resultante tras su
 eleminación es el menor de todos (2912.9), respecto (1214.9) si no
 elimináramos ninguna.
 
 ``` r
-summary(mod.lm5)
+summary(mod.lm5) # Descriptiva del modelo
 ```
 
     ## 
@@ -537,3 +545,191 @@ summary(mod.lm5)
     ## Residual standard error: 7.787 on 691 degrees of freedom
     ## Multiple R-squared:  0.7798, Adjusted R-squared:  0.7753 
     ## F-statistic: 174.8 on 14 and 691 DF,  p-value: < 2.2e-16
+
+Tras eliminar el CoarseAggregate y hacer la descriptiva del modelo,
+podemos observar que el resultado no varia significativamente respecto
+el modelo anterior (lm4). El multipple R-squared se mantiene igual y
+solo disminuye muy levemente el error estándar.
+
+### Colinealidad
+
+Para analizar la colinealidad de las variables (qué tan relacionadas
+estan entre si) utilizamos el VIF:
+
+  - Por orden general, un VIF mayor que 5 u 8 es un valor muy grande que
+    nos indica que hay una relación entre las características, es decir,
+    que las características en cuestión nos explican lo mismo, por lo
+    que no tiene sentido tenerlas juntas en el modelo.
+  - Por contra, un VIF menor a 5 nos indica que las variables
+    predictoras no estan muy relacionadas entre si. Es lo que buscamos.
+
+<!-- end list -->
+
+``` r
+vif(mod.lm5)
+```
+
+    ##                               GVIF Df GVIF^(1/(2*Df))
+    ## poly(Cement, 2)           3.679321  2        1.384975
+    ## poly(BlastFurnaceSlag, 2) 3.185465  2        1.335959
+    ## poly(FlyAsh, 2)           4.867835  2        1.485368
+    ## poly(Water, 2)            3.800342  2        1.396226
+    ## poly(Superplasticizer, 2) 4.945473  2        1.491255
+    ## poly(FineAggregate, 2)    3.009788  2        1.317146
+    ## poly(Age, 2)              1.207466  2        1.048259
+
+## Validación
+
+``` r
+par(mfrow=c(2,2))
+plot(mod.lm5) # Validación de las premisas
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
+  - **Linealidad**: Se cumple. (Residuals vs Fitted) vemos que los
+    residuos se distribuyen uniformemente por encima y por debajo del
+    cero a lo largo de los valores predichos. Se ve claramente con la
+    línea roja recta en el 0.
+  - **Homocedasticidad**: Se cumple. (Residuals vs Fitted) En
+    comparación al modelo lm2, la homoscedesticidad ha mejorado un
+    poco, ahora vemos una mejor distribución de los residuales a lo
+    largo de las estimaciones, aunque seguimos teniendo un poco forma de
+    embudo (residuos más concentrados en valores predichos pequenos y
+    más dispersos en valores predichos grandes)
+  - **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los
+    residuos se ajustan bastante bien a la recta de Normalidad
+  - **Independencia**: Suponemos que se cumple. (Depende del buen diseño
+    de la recogida de datos)
+
+<!-- end list -->
+
+``` r
+residualPlots(mod.lm5)
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+    ##                           Test stat Pr(>|Test stat|)
+    ## poly(Cement, 2)                                     
+    ## poly(BlastFurnaceSlag, 2)                           
+    ## poly(FlyAsh, 2)                                     
+    ## poly(Water, 2)                                      
+    ## poly(Superplasticizer, 2)                           
+    ## poly(FineAggregate, 2)                              
+    ## poly(Age, 2)                                        
+    ## Tukey test                  -0.9631           0.3355
+
+  - En el plot de arriba tenemos el gráfico (Residuals vs Fitted) para
+    cada característica por separado.
+  - Vemos que todas cumplen la premisa de Linealidad, pero no la de
+    Homocedasticidad, ya que en diversas características los residuos no
+    estan distribuidos uniformemente (Age, Superplasticizer)
+  - Aun así, las premisas más importantes son las del modelo completo,
+    con todas las características, analizadas anteriormente y validadas.
+
+## Transformación BoxCox sobre la respuesta
+
+Transformamos ahora las estimaciones para ver si podemos mejorar aun más
+el modelo.
+
+### 1\. Buscamos la lambda óptima
+
+``` r
+par(mfrow=c(1,1))
+bc <- boxCox(mod.lm5)
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+
+``` r
+bc$x[which.max(bc$y)] #lambda optima la cual vamos a elevar las variables resultado (dureza) a esta lambda 
+```
+
+    ## [1] 0.6666667
+
+### 2\. Transformamos las variables resultado y analizamos el modelo resultante
+
+``` r
+lamb <- bc$x[which.max(bc$y)]  
+datos$Strength2 <- datos$Strength^lamb
+mod.lm6 <- lm(Strength2~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2) +
+                        poly(Water,2) + poly(Superplasticizer,2) +
+                        poly(FineAggregate,2) + poly(Age,2), datos)
+summary(mod.lm6)
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Strength2 ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 
+    ##     2) + poly(FlyAsh, 2) + poly(Water, 2) + poly(Superplasticizer, 
+    ##     2) + poly(FineAggregate, 2) + poly(Age, 2), data = datos)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -4.7121 -0.9539  0.0525  1.0888  5.1841 
+    ## 
+    ## Coefficients:
+    ##                             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                 10.46688    0.06007 174.240  < 2e-16 ***
+    ## poly(Cement, 2)1            60.06774    2.75869  21.774  < 2e-16 ***
+    ## poly(Cement, 2)2            -3.06913    1.77794  -1.726 0.084752 .  
+    ## poly(BlastFurnaceSlag, 2)1  40.35857    2.66670  15.134  < 2e-16 ***
+    ## poly(BlastFurnaceSlag, 2)2  -5.16287    1.70590  -3.026 0.002566 ** 
+    ## poly(FlyAsh, 2)1            16.80577    3.25432   5.164 3.16e-07 ***
+    ## poly(FlyAsh, 2)2            -6.12619    1.72903  -3.543 0.000422 ***
+    ## poly(Water, 2)1            -22.06766    2.50167  -8.821  < 2e-16 ***
+    ## poly(Water, 2)2              6.87865    1.98761   3.461 0.000572 ***
+    ## poly(Superplasticizer, 2)1   6.61168    2.88563   2.291 0.022249 *  
+    ## poly(Superplasticizer, 2)2 -11.72862    2.01820  -5.811 9.46e-09 ***
+    ## poly(FineAggregate, 2)1     -0.58786    2.40491  -0.244 0.806963    
+    ## poly(FineAggregate, 2)2     -8.21191    1.86887  -4.394 1.29e-05 ***
+    ## poly(Age, 2)1               38.28213    1.73142  22.110  < 2e-16 ***
+    ## poly(Age, 2)2              -31.57930    1.61727 -19.526  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 1.596 on 691 degrees of freedom
+    ## Multiple R-squared:  0.7824, Adjusted R-squared:  0.778 
+    ## F-statistic: 177.4 on 14 and 691 DF,  p-value: < 2.2e-16
+
+Comparamos otra vez con los modelos anteriores y vemos:
+
+  - El error estándar a disminuido de 7.792 en el lm4 vs 1.596 ahora
+  - El multiple R-squared ha augmentado muy levemente: 0.7798 vs 0.7824
+    ahora
+
+### 3\. Validación del modelo
+
+``` r
+par(mfrow=c(2,2))
+plot(mod.lm6)
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+  - Vemos que corregimos los problemas de normalidad, pero que seguimos
+    teniendo parabola homesteicedad
+  - Nos quedariamos con el modelo 5, que es mas simple y no deteriora
+    ninguna premisa. A parte de que la R2 se mantiene practicamente
+    igual.
+
+## Observaciones influyentes
+
+``` r
+influenceIndexPlot(mod.lm5) 
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+  - Análisis de observaciones:
+      - Las observaciones 81 y 147 tienen mucha influencia a posteriori
+      - La observación 248 está muy mal explicada por el modelo
+      - Las observaciones 65 y 81 tienen mucha influencia a priori.
+  - **Cook’s distance**: Con la distancia de Cook vemos que hay unos 3
+    puntos influyentes.
+  - **Residuals**: no hay ningun punto que destaque, solo uno que tiene
+    un residuo de practicamente 4, cuando deberian oscilar entre -2 y 2,
+    pero ya esta.
+  - **P-valor**: vemos que ninguno llega al 0.05, solo el de 0.1 que
+    coincide con el anterior.
