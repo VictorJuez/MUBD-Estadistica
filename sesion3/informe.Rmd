@@ -321,7 +321,7 @@ Finalmente, es tan insignificante la mejora que obtenemos con el nuevo modelo (m
 
 ## Modelo final: Modelo 5
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 ##-- Modelo final
 mod.final <- mod.lm5
 
