@@ -1,7 +1,8 @@
 MUBD - Estadistica - Sesion 3: Modelo Lineal
 ================
 
-Documentación: [MUBD-3.1.Modelo-lineal.pdf]()
+Documentación:
+[MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
 
 # 1\. Lectura de datos y descriptiva
 
@@ -943,7 +944,7 @@ sqrt(EQM)                                               # Incertidumbre a poster
 
     ## [1] 8.542147
 
-Incertidumbre a posteriori
+Arriba: Incertidumbre a posteriori
 
 ``` r
 sd(test$Strength)                                       # Incertidumbre a priori --> El modelo me reduce a la mitad la incertidumbre en las predicciones
@@ -951,8 +952,8 @@ sd(test$Strength)                                       # Incertidumbre a priori
 
     ## [1] 17.2471
 
-Incertidumbre a priori, el modelo me reduce a la mitad la incertidumbre
-en las predicciones
+Arriba: Incertidumbre a priori, el modelo me reduce a la mitad la
+incertidumbre en las predicciones
 
 ``` r
 summary(test$Strength)
@@ -961,4 +962,4 @@ summary(test$Strength)
     ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
     ##    3.32   24.98   36.08   37.14   47.75   81.75
 
-En un rango de 80, tener un error de 8 está bastante bien
+En un rango de 80, tener un error de 8 está bastante bien.
