@@ -235,6 +235,8 @@ abline(mod.lm0,col="red")
 
 ## Modelo 1: Ajuste del modelo multivariado
 
+Ahora vamos a generar un modelo utilizando todas las características.
+
 ``` r
 mod.lm1 <- lm(Strength~Cement + BlastFurnaceSlag + FlyAsh +      
                        Water + Superplasticizer + CoarseAggregate +
@@ -302,8 +304,6 @@ summary(mod.lm1)                                                    # Resumen de
     la dureza.
 
 ## Modelo 2: Seleccion automatica de variables del Modelo 1
-
-Ahora vamos a generar un modelo utilizando todas las características.
 
 ``` r
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
@@ -375,7 +375,7 @@ Premisas:
   - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a los
     datos. Los residuos deben distribuirse uniformemente por encima y
     por debajo del cero a lo largo de los valores predichos.
-  - **Homoscedasticidad**: Variabilidad constante. Los residuos deben
+  - **Homocedasticidad**: Variabilidad constante. Los residuos deben
     distanciarse del cero lo mismo a lo largo de los valores predichos
     (no tener forma de embudo).
   - **Normalidad de los residuos**: Los errores son normales. Los
@@ -398,7 +398,7 @@ plot(mod.lm2)                              # graficos para valorar premisas
     una curvatura en la media, por lo que no es lineal.
   - **Homocedasticidad**: No se cumple. (Residuals vs Fitted) Tiene un
     poco forma de embudo, en valores predichos menores los residuos
-    están más concentrados en el 0 y cuándo son valores más grandes, la
+    están más concentrados en el 0 y cuando son valores más grandes, la
     dispersión de residuos augmenta.
   - **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los
     residuos se ajustan bastante bien a la recta de Normalidad.
@@ -416,7 +416,7 @@ Cómo interpretar los gráficos:
         forma de embudo).
   - [**Scale-Location**](https://boostedml.com/2019/03/linear-regression-plots-scale-location-plot.html):
     Nos da la misma información que el anterior pero de forma más clara.
-    Ya que normaliza los residuos y estos son solo positivos.
+    Ya que normaliza los residuos y éstos son solo positivos.
   - [**Residuals vs
     Leverage**](https://boostedml.com/2019/03/linear-regression-plots-residuals-vs-leverage.html):
     Nos indica la Homocedasticidad y si hay puntos de gran influencia.
@@ -519,17 +519,17 @@ summary(mod.lm4)
     habíamos observado anteriormente ya seguía una forma lineal y no
     requería de transformación.
   - Por otro lado, vemos que el error estándar ha disminuido (7.92 vs
-    10.0) en el [modelo
-    anterior](#modelo-2-seleccion-automatica-de-variables-del-modelo-1),
-    y que el R-squared ha augmentado (0.7798 vs 0.6253), por lo que
-    ahora podemos explicar un 0.7798 de la dureza con este modelo. En
-    general, hemos obtenido una mejora sustancial respecto respecto al
-    modelo anterior únicamente transformando las variables predictoras.
+    10.0) en el [Modelo
+    2](#modelo-2-seleccion-automatica-de-variables-del-modelo-1), y que
+    el R-squared ha augmentado (0.7798 vs 0.6253), por lo que ahora
+    podemos explicar un 0.7798 de la dureza con este modelo. En general,
+    hemos obtenido una mejora sustancial respecto respecto al modelo
+    anterior únicamente transformando las variables predictoras.
 
 ## Modelo 5: Seleccion automatica de caracteristicas del Modelo 4
 
-Seleccionamos automáticamente las características a utilizar del [modelo
-anterior](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
+Seleccionamos automáticamente las características a utilizar del [Modelo
+4](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
 
 ``` r
 mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
@@ -611,8 +611,8 @@ summary(mod.lm5) # Descriptiva del modelo
 
 Tras eliminar el CoarseAggregate y hacer la descriptiva del modelo,
 podemos observar que el resultado no varia significativamente respecto
-el [modelo anterior
-(4)](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly).
+el [Modelo
+4](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly).
 El multiple R-squared se mantiene igual y solo disminuye muy levemente
 el error estándar.
 
@@ -655,14 +655,12 @@ plot(mod.lm5) # Validación de las premisas
     residuos se distribuyen uniformemente por encima y por debajo del
     cero a lo largo de los valores predichos. Se ve claramente con la
     línea roja recta en el 0.
-  - **Homocedasticidad**: Ha mejorado. (Residuals vs Fitted) En
-    comparación al [modelo de
-    referencia](#modelo-2-seleccion-automatica-de-variables-del-modelo-1),
-    la homoscedesticidad ha mejorado un poco, ahora vemos una mejor
-    distribución de los residuales a lo largo de las estimaciones,
-    aunque seguimos teniendo un poco forma de embudo (residuos más
-    concentrados en valores predichos pequeños y más dispersos en
-    valores predichos grandes)
+  - **Homocedasticidad**: No se cumple. (Residuals vs Fitted) En
+    comparación al [Modelo
+    2](#modelo-2-seleccion-automatica-de-variables-del-modelo-1), la
+    Homocedesticidad ha mejorado un poco, pero seguimos teniendo un poco
+    forma de embudo (residuos más concentrados en valores predichos
+    pequeños y más dispersos en valores predichos grandes)
   - **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los
     residuos se ajustan bastante bien a la recta de Normalidad
   - **Independencia**: Suponemos que se cumple. (Depende del buen diseño
@@ -761,8 +759,8 @@ summary(mod.lm6)
 
 Comparamos otra vez con los modelos anteriores y vemos:
 
-  - El error estándar a disminuido de 7.792 en el Modelo 4 vs 1.596
-    ahora
+  - El error estándar a disminuido de 7.787 en el [Modelo
+    5](#validacion) vs 1.596 ahora
   - El multiple R-squared ha augmentado muy levemente: 0.7798 vs 0.7824
     ahora
 
