@@ -4,10 +4,10 @@ MUBD - Estadistica - Sesion 3: Modelo Lineal
 Documentación:
 [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
 
-# Table Of Contents
+### Table Of Contents
 
   - [Lectura de datos y descriptiva](#lectura-de-datos-y-descriptiva)
-      - [1. Lectura e inspección de los
+      - [1. Lectura e inspeccion de los
         datos](#1-lectura-e-inspeccion-de-los-datos)
       - [2. Explorar todos los pares de
         datos](#2-explorar-todos-los-pares-de-datos)
@@ -15,34 +15,35 @@ Documentación:
         Cemento](#3-descriptiva-bivariante-para-la-variable-cemento)
       - [4. Descriptiva bivariante para todas las
         variables](#4-descriptiva-bivariante-para-todas-las-variables)
-  - [Generación de los modelos](#generacion-de-los-modelos)
+  - [Generacion de los modelos](#generacion-de-los-modelos)
       - [Modelo 0: Ajuste del Modelo lineal
         simple](#modelo-0-ajuste-del-modelo-lineal-simple)
       - [Modelo 1: Ajuste del modelo
         multivariado](#modelo-1-ajuste-del-modelo-multivariado)
-      - [Modelo 2: Selección automática de variables del Modelo
+      - [Modelo 2: Seleccion automatica de variables del Modelo
         1](#modelo-2-seleccion-automatica-de-variables-del-modelo-1)
-      - [Modelo 4: Transformaciones polinómicas sobre las predictoras
+      - [Modelo 4: Transformaciones polinomicas sobre las predictoras
         con
         poly](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
-      - [Modelo 5: Selección automática de características del Modelo
+      - [Modelo 5: Seleccion automatica de caracteristicas del Modelo
         4](#modelo-5-seleccion-automatica-de-caracteristicas-del-modelo-4)
-      - [Modelo 6: Transformación BoxCox sobre la respuesta del Modelo
+      - [Modelo 6: Transformacion BoxCox sobre la respuesta del Modelo
         5](#modelo-6-transformacion-boxcox-sobre-la-respuesta-del-modelo-5)
       - [Modelo 7: Quitamos las observaciones influyentes del Modelo
         5](#modelo-7-quitamos-las-observaciones-influyentes-del-modelo-5)
+      - [Modelo final: Modelo 5](#modelo-final-modelo-5)
   - [Testear el modelo final con nuevos
     datos](#testear-el-modelo-final-con-nuevos-datos)
       - [1. Volver a hacer las
         transformaciones](#1-volver-a-hacer-las-transformaciones)
       - [2. Predicciones para los nuevos
         valores](#2-predicciones-para-los-nuevos-valores)
-      - [3. Cálculo del error y analizar
+      - [3. Calculo del error y analizar
         resultados](#3-calculo-del-error-y-analizar-resultados)
 
 # Lectura de datos y descriptiva
 
-## 1\. Lectura e inspección de los datos
+## 1\. Lectura e inspeccion de los datos
 
 ``` r
 datos <- read.table('Concrete_train.txt',sep="\t",header=TRUE)
@@ -150,7 +151,7 @@ curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una
 relación lineal. Y otras sí, como el superplasticizer o el
 CoarseAggregate
 
-# Generación de los modelos
+# Generacion de los modelos
 
 ## Modelo 0: Ajuste del Modelo lineal simple
 
@@ -296,7 +297,7 @@ summary(mod.lm1)                                                    # Resumen de
     éste modelo que contiene todas las variables podemos explicar un
     63% la dureza
 
-## Modelo 2: Selección automática de variables del Modelo 1
+## Modelo 2: Seleccion automatica de variables del Modelo 1
 
 ``` r
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
@@ -362,7 +363,7 @@ summary(mod.lm2)                           # Modelo con variables seleccionadas
 Al no quitar ninguna variable, tenemos el mismo modelo que el anterior
 (lm1)
 
-### Validación de las premisas del Modelo 2
+### Validacion de las premisas del Modelo 2
 
 Premisas: - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a
 los datos - **Homoscedasticidad**: Variabilidad constante - **Normalidad
@@ -441,7 +442,7 @@ residualPlots(mod.lm2)
   - Tendremos que aplicar transformaciones a éstas características para
     linealizarlas
 
-## Modelo 4: Transformaciones polinómicas sobre las predictoras con poly
+## Modelo 4: Transformaciones polinomicas sobre las predictoras con poly
 
 Con poly: que se incluyen términos polinómicos de orden mayor
 
@@ -500,7 +501,7 @@ summary(mod.lm4)
     sustancial respecto respecto al modelo anterior únicamente
     transformando las variables predictoras.
 
-## Modelo 5: Selección automática de características del Modelo 4
+## Modelo 5: Seleccion automatica de caracteristicas del Modelo 4
 
 Seleccionamos automáticamente las características a utilizar del modelo
 anterior (lm4)
@@ -615,7 +616,7 @@ vif(mod.lm5)
     ## poly(FineAggregate, 2)    3.009788  2        1.317146
     ## poly(Age, 2)              1.207466  2        1.048259
 
-### Validación
+### Validacion
 
 ``` r
 par(mfrow=c(2,2))
@@ -665,12 +666,12 @@ residualPlots(mod.lm5)
   - Aun así, las premisas más importantes son las del modelo completo,
     con todas las características, analizadas anteriormente y validadas.
 
-## Modelo 6: Transformación BoxCox sobre la respuesta del Modelo 5
+## Modelo 6: Transformacion BoxCox sobre la respuesta del Modelo 5
 
 Transformamos ahora las estimaciones para ver si podemos mejorar aun más
 el modelo.
 
-### 1\. Buscamos la lambda óptima
+### 1\. Buscamos la lambda optima
 
 ``` r
 par(mfrow=c(1,1))
@@ -736,7 +737,7 @@ Comparamos otra vez con los modelos anteriores y vemos:
   - El multiple R-squared ha augmentado muy levemente: 0.7798 vs 0.7824
     ahora
 
-### 3\. Validación del modelo
+### 3\. Validacion del modelo
 
 ``` r
 par(mfrow=c(2,2))
@@ -968,7 +969,7 @@ abline(0,1,col=2,lwd=2)         # Bisectriz
 
 Valores reales vs valores predichos. Buen resultado, bastante ajustado.
 
-## 3\. Cálculo del error y analizar resultados
+## 3\. Calculo del error y analizar resultados
 
 ``` r
 ##--EQM (Error Cuadratico Medio)
