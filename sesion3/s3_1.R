@@ -177,7 +177,6 @@ mod.final <- mod.lm5
 
 ##-- Efectos
 library('effects')
-plot(allEffects(mod.final))
 
 
 ############################################################

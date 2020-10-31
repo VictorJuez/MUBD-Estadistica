@@ -364,11 +364,11 @@ plot(mod.lm2)                              # graficos para valorar premisas
     estandarizados no deberían cambiar cuando los puntos de influencia
     augmentan (nos estamos fijando en los puntos negros): en este caso
     parece que disminuye, lo que indica homoscedesticidad.
-      - Por otro lado los puntos con un gran ‘leverage’ son puntos de
-        **gran influencia**, por lo que eliminarlos harían cambiar mucho
-        el modelo. Para este propósito nos fijamos en la línea de Cook
-        (la cual mesura el efecto de eliminar el valor). Todos los
-        puntos fuera de ésta línea indican que tienen una gran
+      - Por otro lado los puntos con un gran ‘leverage’ (palanca) son
+        puntos de **gran influencia**, por lo que eliminarlos harían
+        cambiar mucho el modelo. Para este propósito nos fijamos en la
+        línea de Cook (la cual mesura el efecto de eliminar el valor).
+        Todos los puntos fuera de ésta línea indican que tienen una gran
         influencia. En este caso vemos que no hay ninguno que esté furea
         la línea de Cook (de hecho la línea no llega ni a aparecer en el
         diagrama).
@@ -716,20 +716,249 @@ plot(mod.lm6)
 
 ## Observaciones influyentes
 
+### 1\. Detectar los puntos
+
 ``` r
 influenceIndexPlot(mod.lm5) 
 ```
 
 ![](informe_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
-  - Análisis de observaciones:
-      - Las observaciones 81 y 147 tienen mucha influencia a posteriori
-      - La observación 248 está muy mal explicada por el modelo
-      - Las observaciones 65 y 81 tienen mucha influencia a priori.
-  - **Cook’s distance**: Con la distancia de Cook vemos que hay unos 3
-    puntos influyentes.
-  - **Residuals**: no hay ningun punto que destaque, solo uno que tiene
-    un residuo de practicamente 4, cuando deberian oscilar entre -2 y 2,
-    pero ya esta.
-  - **P-valor**: vemos que ninguno llega al 0.05, solo el de 0.1 que
-    coincide con el anterior.
+  - **Cook’s distance**: Vemos que hay dos observaciones con gran
+    influencia a posteriori (81 y 147).
+
+  - **Residuals**: Una observación, para estar bien explicada por el
+    modelo, debería tener un residuo entre -2 y 2 aproximadamente. En el
+    diagrama vemos que la observacion 248 tiene un residuo de 4. es
+    decir, muy mal explicada por el modelo.
+
+  - **P-valor**: Coincidiendo con la observacion anterior (248), vemos
+    que ésta observación tiene un p-valor menor que 0.5, en concreto
+    0.2, lo que implica que lo descartamos.
+
+  - **Hat-values**: Las observaciones 81 y 65 tienen mucha influencia a
+    priori.
+
+  - [**Cook’s distance vs
+    Hat-values**](https://stats.stackexchange.com/questions/319024/cooks-distance-vs-hat-values):
+    
+      - **Hat-values**: Nos indica las observaciones con más palanca. En
+        otras palabras, las observaciones que se distancian más de su
+        valor real. En el resultado anterior, vemos que los resultados
+        de las observaciones 65 y 81 se alejan mucho de los valores
+        reales.
+      - **Cook’s distance**: Muestra cómo cambiaría el modelo si
+        elmináramos una determinada observación. Es decir, si tendría
+        un gran efecto o no eliminar dichos puntos del modelo. Nos
+        referimos a éste tipo de influencia como a posteriori porque nos
+        indica como cambiará el resultado si quitamos dichas
+        observaciones (post-resultado). Por otro lado, los
+        **hat-values** sólo nos indica aquellos puntos con gran palanca,
+        sin saber qué efecto tiene quitarlos del modelo (pre-resultado).
+
+<!-- end list -->
+
+``` r
+par(mfrow=c(1,1))
+influencePlot(mod.lm5)  
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+    ##       StudRes        Hat      CookD
+    ## 59  -3.114563 0.02518954 0.01650322
+    ## 65   1.466400 0.21703597 0.03967175
+    ## 81   2.265047 0.21667267 0.09404502
+    ## 147 -3.035049 0.11508759 0.07892921
+    ## 248  3.871532 0.02125956 0.02127438
+
+Gráfico de los Hat-Values, se ve claramente cómo los valores 81 y 65 son
+los más influyentes (a priori).
+
+### 2\. Eliminar los influyentes del modelo
+
+**No estoy seguro de esto, pero es lo que deduzco :)** -\> Eliminamos
+los puntos 81, 147 y 248. Vemos que el punto 65 no está includido, ésto
+es porqué:
+
+1.  Mejor eliminar las menos observaciones posibles
+2.  De los indicadores de puntos influyentes, los hat-values son los
+    menos relevantes.
+
+<!-- end list -->
+
+``` r
+obs.rm <- c(81,147,248)                              # Eliminar las 2 mas influyentes a posteriori (81 y 147) y la peor explicada (248)
+col.points <- rep(rgb(0,0,0,0.1),nrow(datos))        # Vector de colores
+col.points[obs.rm] <- 2:4                            # Colores distintos para las observaciones influyentes
+pairs(datos[,-10],col=col.points,pch=19,cex=0.8)     # Dibujo por pares de las observaciones influyentes
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+
+Éste plot nos muestra donde se encuentran los puntos influyentes
+seleccionados en los distintos gráficos que relacionan las
+características entre sí.
+
+## 3\. Ajuste del modelo sin observaciones influyentes
+
+``` r
+datos.rm <- datos[-obs.rm ,]  # Nos creamos un nuevo data.frame sin estas observaciones
+mod.lm7 <- lm(Strength~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2)+
+                       poly(Water,2) + poly(Superplasticizer,2)  +
+                       poly(FineAggregate,2) + poly(Age,2),datos.rm)
+```
+
+## 4\. Comparar con el modelo anterior
+
+``` r
+summary(mod.lm7)   # Modelo nuevo sin outliers y observaciones influyentes
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 
+    ##     2) + poly(FlyAsh, 2) + poly(Water, 2) + poly(Superplasticizer, 
+    ##     2) + poly(FineAggregate, 2) + poly(Age, 2), data = datos.rm)
+    ## 
+    ## Residuals:
+    ##     Min      1Q  Median      3Q     Max 
+    ## -24.648  -4.262  -0.087   4.867  23.808 
+    ## 
+    ## Coefficients:
+    ##                             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                  35.0967     0.2881 121.819  < 2e-16 ***
+    ## poly(Cement, 2)1            290.2845    13.1423  22.088  < 2e-16 ***
+    ## poly(Cement, 2)2             -7.3021     8.5105  -0.858 0.391181    
+    ## poly(BlastFurnaceSlag, 2)1  200.4719    12.7986  15.664  < 2e-16 ***
+    ## poly(BlastFurnaceSlag, 2)2  -26.9816     8.1627  -3.305 0.000997 ***
+    ## poly(FlyAsh, 2)1             77.3598    15.6678   4.938 9.94e-07 ***
+    ## poly(FlyAsh, 2)2            -22.0013     8.2858  -2.655 0.008107 ** 
+    ## poly(Water, 2)1            -116.1809    12.0667  -9.628  < 2e-16 ***
+    ## poly(Water, 2)2              41.9146     9.6170   4.358 1.51e-05 ***
+    ## poly(Superplasticizer, 2)1   24.1699    14.0370   1.722 0.085543 .  
+    ## poly(Superplasticizer, 2)2  -60.0532     9.6998  -6.191 1.03e-09 ***
+    ## poly(FineAggregate, 2)1       3.9081    11.5088   0.340 0.734283    
+    ## poly(FineAggregate, 2)2     -41.3440     9.0218  -4.583 5.45e-06 ***
+    ## poly(Age, 2)1               182.2621     8.2822  22.007  < 2e-16 ***
+    ## poly(Age, 2)2              -151.6209     7.7358 -19.600  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.639 on 688 degrees of freedom
+    ## Multiple R-squared:  0.7857, Adjusted R-squared:  0.7813 
+    ## F-statistic: 180.2 on 14 and 688 DF,  p-value: < 2.2e-16
+
+``` r
+summary(mod.lm5)   # Modelo antiguo
+```
+
+    ## 
+    ## Call:
+    ## lm(formula = Strength ~ poly(Cement, 2) + poly(BlastFurnaceSlag, 
+    ##     2) + poly(FlyAsh, 2) + poly(Water, 2) + poly(Superplasticizer, 
+    ##     2) + poly(FineAggregate, 2) + poly(Age, 2), data = datos)
+    ## 
+    ## Residuals:
+    ##      Min       1Q   Median       3Q      Max 
+    ## -23.7961  -4.4395  -0.1394   4.9763  29.5278 
+    ## 
+    ## Coefficients:
+    ##                             Estimate Std. Error t value Pr(>|t|)    
+    ## (Intercept)                  35.2095     0.2931 120.142  < 2e-16 ***
+    ## poly(Cement, 2)1            292.3493    13.4585  21.722  < 2e-16 ***
+    ## poly(Cement, 2)2             -6.1698     8.6738  -0.711 0.477133    
+    ## poly(BlastFurnaceSlag, 2)1  197.2719    13.0097  15.163  < 2e-16 ***
+    ## poly(BlastFurnaceSlag, 2)2  -26.3240     8.3224  -3.163 0.001630 ** 
+    ## poly(FlyAsh, 2)1             73.2990    15.8765   4.617 4.65e-06 ***
+    ## poly(FlyAsh, 2)2            -23.1851     8.4352  -2.749 0.006141 ** 
+    ## poly(Water, 2)1            -110.2495    12.2046  -9.033  < 2e-16 ***
+    ## poly(Water, 2)2              34.6832     9.6968   3.577 0.000372 ***
+    ## poly(Superplasticizer, 2)1   34.0869    14.0778   2.421 0.015721 *  
+    ## poly(Superplasticizer, 2)2  -57.6252     9.8460  -5.853 7.47e-09 ***
+    ## poly(FineAggregate, 2)1       2.9844    11.7326   0.254 0.799288    
+    ## poly(FineAggregate, 2)2     -41.9568     9.1175  -4.602 4.98e-06 ***
+    ## poly(Age, 2)1               182.1311     8.4469  21.562  < 2e-16 ***
+    ## poly(Age, 2)2              -150.7945     7.8900 -19.112  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## Residual standard error: 7.787 on 691 degrees of freedom
+    ## Multiple R-squared:  0.7798, Adjusted R-squared:  0.7753 
+    ## F-statistic: 174.8 on 14 and 691 DF,  p-value: < 2.2e-16
+
+Finalmente, es tan insignificante la mejora que obtenemos con el nuevo
+modelo (multiple R-squared 0.7857 en el nuevo vs 0.7798 en el antiguo)
+que nos quedamos con el antiguo. Menos transformaciones necesarias
+mejor.
+
+## Modelo final
+
+``` r
+##-- Modelo final
+mod.final <- mod.lm5
+
+##-- Efectos
+library('effects')
+plot(allEffects(mod.final))
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+
+## Testearlo con nuevos datos
+
+### 1\. Volver a hacer las transformaciones
+
+``` r
+# setwd('...')
+test <- read.table('Concrete_test.txt',sep="\t",header=TRUE)
+
+##-- Volver a hacer transformaciones en test (por si la necesito)
+test$Strength2 <- test$Strength^lamb
+```
+
+### 2\. Predicciones para los nuevos valores
+
+``` r
+##-- Predicciones
+pr <- predict(mod.final,test)   # Predicciones para los nuevos valores
+par(mfrow=c(1,1))           
+plot(pr,test$Strength,asp=1)    # Predicciones vs valores predichos 
+abline(0,1,col=2,lwd=2)         # Bisectriz
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
+
+Valores reales vs valores predichos. Buen resultado, bastante ajustado.
+
+### 3\. Cálculo del error y analizar resultados
+
+``` r
+##--EQM (Error Cuadratico Medio)
+n <- dim(test)[1]                                       # Tamanyo muestral
+## vemos que es un 30% de la muestra de entrenamiento
+EQM <- sum((pr-test$Strength)^2)/n                      # Error Cuadratico Medio
+sqrt(EQM)                                               # Incertidumbre a posteriori                                                
+```
+
+    ## [1] 8.542147
+
+Incertidumbre a posteriori
+
+``` r
+sd(test$Strength)                                       # Incertidumbre a priori --> El modelo me reduce a la mitad la incertidumbre en las predicciones
+```
+
+    ## [1] 17.2471
+
+Incertidumbre a priori, el modelo me reduce a la mitad la incertidumbre
+en las predicciones
+
+``` r
+summary(test$Strength)
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+    ##    3.32   24.98   36.08   37.14   47.75   81.75
+
+En un rango de 80, tener un error de 8 está bastante bien

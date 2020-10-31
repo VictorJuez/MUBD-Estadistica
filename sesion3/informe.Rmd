@@ -3,7 +3,7 @@ title: "MUBD - Estadistica - Sesion 3: Modelo Lineal"
 output: github_document
 ---
 
-Documentación: [MUBD-3.1.Modelo-lineal.pdf]()
+Documentación: [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -134,7 +134,7 @@ plot(mod.lm2)                              # graficos para valorar premisas
 - **Scale-Location**: Con el mismo propósito que el anterior, pero estandarizando los residuos, de forma que estos son todos positivos. (Es como si plegaramos el diagrama anterior por la mitad). Con esto, nos podemos fijar en la línea roja, y en este caso observar que tiene una tendencia decreciente, es decir, que cuando mayor es la estimación más grande es el residuo (más error tenemos).
 - **Normal Q-Q**: Nos sirve para ver si el las estimaciones estan distribuidos de forma normal o no. En este caso vemos que a excepción de valores muy pequenos y grandes sí que lo hacen.
 - [**Residuals vs Leverage**](https://boostedml.com/2019/03/linear-regression-plots-residuals-vs-leverage.html): Este gráfico nos sirve para ver como cambia la dispersión de los residuos estandarizados cuando el [leverage](https://en.wikipedia.org/wiki/Leverage_(statistics)) (puntos de influencia) incrementan. La dispersión de los residuos estandarizados no deberían cambiar cuando los puntos de influencia augmentan (nos estamos fijando en los puntos negros): en este caso parece que disminuye, lo que indica homoscedesticidad.
-  - Por otro lado los puntos con un gran 'leverage' son puntos de **gran influencia**, por lo que eliminarlos harían cambiar mucho el modelo. Para este propósito nos fijamos en la línea de Cook (la cual mesura el efecto de eliminar el valor). Todos los puntos fuera de ésta línea indican que tienen una gran influencia. En este caso vemos que no hay ninguno que esté furea la línea de Cook (de hecho la línea no llega ni a aparecer en el diagrama).
+  - Por otro lado los puntos con un gran 'leverage' (palanca) son puntos de **gran influencia**, por lo que eliminarlos harían cambiar mucho el modelo. Para este propósito nos fijamos en la línea de Cook (la cual mesura el efecto de eliminar el valor). Todos los puntos fuera de ésta línea indican que tienen una gran influencia. En este caso vemos que no hay ninguno que esté furea la línea de Cook (de hecho la línea no llega ni a aparecer en el diagrama).
 
 
 ## Nueva descriptiva: Residuos vs variables predictoras
@@ -243,14 +243,116 @@ plot(mod.lm6)
 
 ## Observaciones influyentes
 
+### 1. Detectar los puntos
+
 ```{r}
 influenceIndexPlot(mod.lm5) 
 ```
 
-- Análisis de observaciones:
-  - Las observaciones 81 y 147 tienen mucha influencia a posteriori
-  - La observación 248 está muy mal explicada por el modelo
-  - Las observaciones 65 y 81 tienen mucha influencia a priori.
-- **Cook's distance**: Con la distancia de Cook vemos que hay unos 3 puntos influyentes.
-- **Residuals**: no hay ningun punto que destaque, solo uno que tiene un residuo de practicamente 4, cuando deberian oscilar entre -2 y 2, pero ya está.
-- **P-valor**: vemos que ninguno llega al 0.05, solo el de 0.1 que coincide con el anterior.
+- **Cook's distance**: Vemos que hay dos observaciones con gran influencia a posteriori (81 y 147).
+- **Residuals**: Una observación, para estar bien explicada por el modelo, debería tener un residuo entre -2 y 2 aproximadamente. En el diagrama vemos que la observacion 248 tiene un residuo de 4. es decir, muy mal explicada por el modelo.
+- **P-valor**: Coincidiendo con la observacion anterior (248), vemos que ésta observación tiene un p-valor menor que 0.5, en concreto 0.2, lo que implica que lo descartamos.
+- **Hat-values**: Las observaciones 81 y 65 tienen mucha influencia a priori.
+
+- [**Cook's distance vs Hat-values**](https://stats.stackexchange.com/questions/319024/cooks-distance-vs-hat-values): 
+  - **Hat-values**: Nos indica las observaciones con más palanca. En otras palabras, las observaciones que se distancian más de su valor real. En el resultado anterior, vemos que los resultados de las observaciones 65 y 81 se alejan mucho de los valores reales.
+  - **Cook's distance**: Muestra cómo cambiaría el modelo si elmináramos una determinada observación. Es decir, si tendría un gran efecto o no eliminar dichos puntos del modelo. Nos referimos a éste tipo de influencia como a posteriori porque nos indica como cambiará el resultado si quitamos dichas observaciones (post-resultado). Por otro lado, los **hat-values** sólo nos indica aquellos puntos con gran palanca, sin saber qué efecto tiene quitarlos del modelo (pre-resultado).
+
+
+```{r}
+par(mfrow=c(1,1))
+influencePlot(mod.lm5)  
+```
+
+Gráfico de los Hat-Values, se ve claramente cómo los valores 81 y 65 son los más influyentes (a priori).
+
+### 2. Eliminar los influyentes del modelo
+
+**No estoy seguro de esto, pero es lo que deduzco :)** -> Eliminamos los puntos 81, 147 y 248. Vemos que el punto 65 no está includido, ésto es porqué:
+  
+  1. Mejor eliminar las menos observaciones posibles
+  2. De los indicadores de puntos influyentes, los hat-values son los menos relevantes.
+
+```{r}              
+obs.rm <- c(81,147,248)                              # Eliminar las 2 mas influyentes a posteriori (81 y 147) y la peor explicada (248)
+col.points <- rep(rgb(0,0,0,0.1),nrow(datos))        # Vector de colores
+col.points[obs.rm] <- 2:4                            # Colores distintos para las observaciones influyentes
+pairs(datos[,-10],col=col.points,pch=19,cex=0.8)     # Dibujo por pares de las observaciones influyentes
+```
+
+Éste plot nos muestra donde se encuentran los puntos influyentes seleccionados en los distintos gráficos que relacionan las características entre sí.
+
+## 3. Ajuste del modelo sin observaciones influyentes
+
+```{r}
+datos.rm <- datos[-obs.rm ,]  # Nos creamos un nuevo data.frame sin estas observaciones
+mod.lm7 <- lm(Strength~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2)+
+                       poly(Water,2) + poly(Superplasticizer,2)  +
+                       poly(FineAggregate,2) + poly(Age,2),datos.rm)
+```
+
+## 4. Comparar con el modelo anterior
+
+```{r}
+summary(mod.lm7)   # Modelo nuevo sin outliers y observaciones influyentes
+summary(mod.lm5)   # Modelo antiguo
+```
+
+Finalmente, es tan insignificante la mejora que obtenemos con el nuevo modelo (multiple R-squared 0.7857 en el nuevo vs 0.7798 en el antiguo) que nos quedamos con el antiguo. Menos transformaciones necesarias mejor.
+
+## Modelo final
+
+```{r}
+##-- Modelo final
+mod.final <- mod.lm5
+
+##-- Efectos
+library('effects')
+plot(allEffects(mod.final))
+```
+
+## Testearlo con nuevos datos
+
+### 1. Volver a hacer las transformaciones
+```{r}
+# setwd('...')
+test <- read.table('Concrete_test.txt',sep="\t",header=TRUE)
+
+##-- Volver a hacer transformaciones en test (por si la necesito)
+test$Strength2 <- test$Strength^lamb
+```
+
+### 2. Predicciones para los nuevos valores
+
+```{r}
+##-- Predicciones
+pr <- predict(mod.final,test)   # Predicciones para los nuevos valores
+par(mfrow=c(1,1))           
+plot(pr,test$Strength,asp=1)    # Predicciones vs valores predichos 
+abline(0,1,col=2,lwd=2)         # Bisectriz
+```
+
+Valores reales vs valores predichos. Buen resultado, bastante ajustado.
+
+### 3. Cálculo del error y analizar resultados
+```{r}
+##--EQM (Error Cuadratico Medio)
+n <- dim(test)[1]                                       # Tamanyo muestral
+## vemos que es un 30% de la muestra de entrenamiento
+EQM <- sum((pr-test$Strength)^2)/n                      # Error Cuadratico Medio
+sqrt(EQM)                                               # Incertidumbre a posteriori                                                
+```
+
+Arriba: Incertidumbre a posteriori
+
+```{r}
+sd(test$Strength)                                       # Incertidumbre a priori --> El modelo me reduce a la mitad la incertidumbre en las predicciones
+```
+
+Arriba: Incertidumbre a priori, el modelo me reduce a la mitad la incertidumbre en las predicciones
+
+```{r}
+summary(test$Strength)
+```
+
+En un rango de 80, tener un error de 8 está bastante bien.
