@@ -5,12 +5,31 @@ output: github_document
 
 Documentación: [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
 
+# Table Of Contents
+- [Lectura de datos y descriptiva](#lectura-de-datos-y-descriptiva)
+  * [1\. Lectura e inspección de los datos](#1-lectura-e-inspeccion-de-los-datos)
+  * [2\. Explorar todos los pares de datos](#2-explorar-todos-los-pares-de-datos)
+  * [3\. Descriptiva bivariante para la variable Cemento](#3-descriptiva-bivariante-para-la-variable-cemento)
+  * [4\. Descriptiva bivariante para todas las variables](#4-descriptiva-bivariante-para-todas-las-variables)
+- [Generación de los modelos](#generacion-de-los-modelos)
+  * [Modelo 0: Ajuste del Modelo lineal simple](#modelo-0-ajuste-del-modelo-lineal-simple)
+  * [Modelo 1: Ajuste del modelo multivariado](#modelo-1-ajuste-del-modelo-multivariado)
+  * [Modelo 2: Selección automática de variables del Modelo 1](#modelo-2-seleccion-automatica-de-variables-del-modelo-1)
+  * [Modelo 4: Transformaciones polinómicas sobre las predictoras con poly](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
+  * [Modelo 5: Selección automática de características del Modelo 4](#modelo-5-seleccion-automatica-de-caracteristicas-del-modelo-4)
+  * [Modelo 6: Transformación BoxCox sobre la respuesta del Modelo 5](#modelo-6-transformacion-boxcox-sobre-la-respuesta-del-modelo-5)
+  * [Modelo 7: Quitamos las observaciones influyentes del Modelo 5](#modelo-7-quitamos-las-observaciones-influyentes-del-modelo-5)
+- [Testear el modelo final con nuevos datos](#testear-el-modelo-final-con-nuevos-datos)
+  * [1\. Volver a hacer las transformaciones](#1-volver-a-hacer-las-transformaciones)
+  * [2\. Predicciones para los nuevos valores](#2-predicciones-para-los-nuevos-valores)
+  * [3\. Cálculo del error y analizar resultados](#3-calculo-del-error-y-analizar-resultados)
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-# 1. Lectura de datos y descriptiva
+# Lectura de datos y descriptiva
 
-## Lectura e inspección de los datos
+## 1. Lectura e inspección de los datos
 ```{r echo=FALSE}
 
 setwd('/Users/victorjuez/Google Drive/Documents/Documents academics/MUBD/Estadistica/sesion3')
@@ -26,7 +45,7 @@ boxplot(datos, las=2)       # boxplot de todas las variables
 
 En este último gráfico vemos como se distribuyen las distintas características. Podemos observar como algunas lo hacen de forma normal (Cement, CoarseAggregate, FineAggregate). Y otras no (FlyAsh, Age, Superplasticizer). Posteriormente veremos diferentes filtros para intentar normalizarlas todas.
 
-## Explorar todos los pares de datos
+## 2. Explorar todos los pares de datos
 ```{r}
 pairs(datos) # descriptiva bivariante
 ```
@@ -35,7 +54,7 @@ Con este gráfico, podemos ver como se relacionan todas las características ent
 De todas ellas nos interesa ver como se relaciona cada una de las características con la variable resultado (Strenght). 
 A simple vista, la que parece tener la relación lineal más clara con Strenght es el Cemento (cuando este incrementa, también lo hace la Dureza)
 
-## Descriptiva bivariante para la variable Cemento
+## 3. Descriptiva bivariante para la variable Cemento
 ```{r}
 plot(Strength~Cement,datos)                       # puntos
 with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de la relacion
@@ -43,7 +62,7 @@ with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de
 
 Con esta estimación (linea roja), afirmamos pues, que la relación es lineal
 
-## Descriptiva bivariante para todas las variables
+## 4. Descriptiva bivariante para todas las variables
 ```{r}
 par(mfrow=c(2,4))
 for(i in 1:8){
@@ -55,9 +74,9 @@ for(i in 1:8){
 Ahora, con todas las otras características, vemos que algunas tinenen curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una relación lineal.
 Y otras sí, como el superplasticizer o el CoarseAggregate
 
-# 2. Ajuste del Modelo
+# Generación de los modelos
 
-## Ajuste del Modelo lineal simple
+## Modelo 0: Ajuste del Modelo lineal simple
 ```{r}
 mod.lm0 <- lm(Strength~Cement,datos)
 summary(mod.lm0)
@@ -87,7 +106,7 @@ abline(mod.lm0,col="red")
 
 La línea roja es el modelo lineal 
 
-## Ajuste del modelo multivariado
+## Modelo 1: Ajuste del modelo multivariado
 
 ```{r}
 mod.lm1 <- lm(Strength~Cement + BlastFurnaceSlag + FlyAsh +      
@@ -102,7 +121,7 @@ summary(mod.lm1)                                                    # Resumen de
 - A simple vista ya vemos las variables más significativas, con tres estrellas (Cemento, FlyAsh, Age..) y las menos (FineAggregate, CoarseAggregate).
 - Importante destacar el R-squared: ha augmentado considerablemente (0.6253) en comparación al 0.25 que teníamos en el modelo anterior con solo el Cemento como variable. Ésto nos indica que ahora con éste modelo que contiene todas las variables podemos explicar un 63% la dureza
 
-## Selección automática de variables
+## Modelo 2: Selección automática de variables del Modelo 1
 
 ```{r}
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
@@ -118,7 +137,7 @@ summary(mod.lm2)                           # Modelo con variables seleccionadas
 
 Al no quitar ninguna variable, tenemos el mismo modelo que el anterior (lm1)
 
-## Validación de las premisas
+### Validación de las premisas del Modelo 2
 Premisas:
 - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a los datos
 - **Homoscedasticidad**: Variabilidad constante
@@ -137,7 +156,7 @@ plot(mod.lm2)                              # graficos para valorar premisas
   - Por otro lado los puntos con un gran 'leverage' (palanca) son puntos de **gran influencia**, por lo que eliminarlos harían cambiar mucho el modelo. Para este propósito nos fijamos en la línea de Cook (la cual mesura el efecto de eliminar el valor). Todos los puntos fuera de ésta línea indican que tienen una gran influencia. En este caso vemos que no hay ninguno que esté furea la línea de Cook (de hecho la línea no llega ni a aparecer en el diagrama).
 
 
-## Nueva descriptiva: Residuos vs variables predictoras
+### Nueva descriptiva: Residuos vs variables predictoras
 ```{r}
 library(car)
 residualPlots(mod.lm2)
@@ -146,7 +165,7 @@ residualPlots(mod.lm2)
 - Aquí podemos observar por cada característica como varia la dispersión de los residuos. Lo que buscamos, otra vez, es que ésta no varie a lo largo de los valores de cada característica. Como vemos, las características que lo cumplen son: Cement, CoarseAggregate y Water. En las otras, en cambio, observamos curvaturas lo cual indican justamente lo contrario.
 - Tendremos que aplicar transformaciones a éstas características para linealizarlas
 
-## Transformaciones polinomicas sobre las predictoras con poly
+## Modelo 4: Transformaciones polinómicas sobre las predictoras con poly
 Con poly: que se incluyen términos polinómicos de orden mayor
 
 ```{r}
@@ -159,7 +178,7 @@ summary(mod.lm4)
 - Vemos todos los coeficientes de todas las características aplicando transformaciones polinomicas de 1er y 2o grado y la significancia de cada una de ellas. A excepción del 'CoarseAggregate', que como habiamos observado anteriormente ya seguía una forma lineal y no requeria de transformación. 
 - Por otro lado, vemos que el error estándar ha disminuido (7.92 vs 10.0) en el modelo anterior, y que el R-squared ha augmentado (0.7798 vs 0.6253), por lo que ahora podemos explicar un 0.7798 de la dureza con este modelo. En general, hemos obtenido una mejora sustancial respecto respecto al modelo anterior únicamente transformando las variables predictoras.
 
-### Selección automática de características
+## Modelo 5: Selección automática de características del Modelo 4
 Seleccionamos automáticamente las características a utilizar del modelo anterior (lm4)
 
 ```{r}
@@ -184,7 +203,7 @@ Para analizar la colinealidad de las variables (qué tan relacionadas estan entr
 vif(mod.lm5)
 ```
 
-## Validación
+### Validación
 ```{r}
 par(mfrow=c(2,2))
 plot(mod.lm5) # Validación de las premisas
@@ -204,7 +223,7 @@ residualPlots(mod.lm5)
 - Vemos que todas cumplen la premisa de Linealidad, pero no la de Homocedasticidad, ya que en diversas características los residuos no estan distribuidos uniformemente (Age, Superplasticizer)
 - Aun así, las premisas más importantes son las del modelo completo, con todas las características, analizadas anteriormente y validadas.
 
-## Transformación BoxCox sobre la respuesta
+## Modelo 6: Transformación BoxCox sobre la respuesta del Modelo 5
 Transformamos ahora las estimaciones para ver si podemos mejorar aun más el modelo.
 
 ### 1. Buscamos la lambda óptima
@@ -241,9 +260,9 @@ plot(mod.lm6)
 - Vemos que corregimos los problemas de normalidad, pero que seguimos teniendo parabola homesteicedad
 - Nos quedariamos con el modelo 5, que es mas simple y no deteriora ninguna premisa. A parte de que la R2 se mantiene practicamente igual.
 
-## Observaciones influyentes
+## Modelo 7: Quitamos las observaciones influyentes del Modelo 5
 
-### 1. Detectar los puntos
+### 1. Detectar los puntos influyentes
 
 ```{r}
 influenceIndexPlot(mod.lm5) 
@@ -282,7 +301,7 @@ pairs(datos[,-10],col=col.points,pch=19,cex=0.8)     # Dibujo por pares de las o
 
 Éste plot nos muestra donde se encuentran los puntos influyentes seleccionados en los distintos gráficos que relacionan las características entre sí.
 
-## 3. Ajuste del modelo sin observaciones influyentes
+### 3. Ajuste del modelo sin observaciones influyentes
 
 ```{r}
 datos.rm <- datos[-obs.rm ,]  # Nos creamos un nuevo data.frame sin estas observaciones
@@ -291,7 +310,7 @@ mod.lm7 <- lm(Strength~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2
                        poly(FineAggregate,2) + poly(Age,2),datos.rm)
 ```
 
-## 4. Comparar con el modelo anterior
+### 4. Comparar con el Modelo 5
 
 ```{r}
 summary(mod.lm7)   # Modelo nuevo sin outliers y observaciones influyentes
@@ -300,7 +319,7 @@ summary(mod.lm5)   # Modelo antiguo
 
 Finalmente, es tan insignificante la mejora que obtenemos con el nuevo modelo (multiple R-squared 0.7857 en el nuevo vs 0.7798 en el antiguo) que nos quedamos con el antiguo. Menos transformaciones necesarias mejor.
 
-## Modelo final
+## Modelo final: Modelo 5
 
 ```{r}
 ##-- Modelo final
@@ -311,9 +330,9 @@ library('effects')
 plot(allEffects(mod.final))
 ```
 
-## Testearlo con nuevos datos
+# Testear el modelo final con nuevos datos
 
-### 1. Volver a hacer las transformaciones
+## 1. Volver a hacer las transformaciones
 ```{r}
 # setwd('...')
 test <- read.table('Concrete_test.txt',sep="\t",header=TRUE)
@@ -322,7 +341,7 @@ test <- read.table('Concrete_test.txt',sep="\t",header=TRUE)
 test$Strength2 <- test$Strength^lamb
 ```
 
-### 2. Predicciones para los nuevos valores
+## 2. Predicciones para los nuevos valores
 
 ```{r}
 ##-- Predicciones
@@ -334,7 +353,7 @@ abline(0,1,col=2,lwd=2)         # Bisectriz
 
 Valores reales vs valores predichos. Buen resultado, bastante ajustado.
 
-### 3. Cálculo del error y analizar resultados
+## 3. Cálculo del error y analizar resultados
 ```{r}
 ##--EQM (Error Cuadratico Medio)
 n <- dim(test)[1]                                       # Tamanyo muestral

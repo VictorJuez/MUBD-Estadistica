@@ -4,9 +4,45 @@ MUBD - Estadistica - Sesion 3: Modelo Lineal
 Documentación:
 [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
 
-# 1\. Lectura de datos y descriptiva
+# Table Of Contents
 
-## Lectura e inspección de los datos
+  - [Lectura de datos y descriptiva](#lectura-de-datos-y-descriptiva)
+      - [1. Lectura e inspección de los
+        datos](#1-lectura-e-inspeccion-de-los-datos)
+      - [2. Explorar todos los pares de
+        datos](#2-explorar-todos-los-pares-de-datos)
+      - [3. Descriptiva bivariante para la variable
+        Cemento](#3-descriptiva-bivariante-para-la-variable-cemento)
+      - [4. Descriptiva bivariante para todas las
+        variables](#4-descriptiva-bivariante-para-todas-las-variables)
+  - [Generación de los modelos](#generacion-de-los-modelos)
+      - [Modelo 0: Ajuste del Modelo lineal
+        simple](#modelo-0-ajuste-del-modelo-lineal-simple)
+      - [Modelo 1: Ajuste del modelo
+        multivariado](#modelo-1-ajuste-del-modelo-multivariado)
+      - [Modelo 2: Selección automática de variables del Modelo
+        1](#modelo-2-seleccion-automatica-de-variables-del-modelo-1)
+      - [Modelo 4: Transformaciones polinómicas sobre las predictoras
+        con
+        poly](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
+      - [Modelo 5: Selección automática de características del Modelo
+        4](#modelo-5-seleccion-automatica-de-caracteristicas-del-modelo-4)
+      - [Modelo 6: Transformación BoxCox sobre la respuesta del Modelo
+        5](#modelo-6-transformacion-boxcox-sobre-la-respuesta-del-modelo-5)
+      - [Modelo 7: Quitamos las observaciones influyentes del Modelo
+        5](#modelo-7-quitamos-las-observaciones-influyentes-del-modelo-5)
+  - [Testear el modelo final con nuevos
+    datos](#testear-el-modelo-final-con-nuevos-datos)
+      - [1. Volver a hacer las
+        transformaciones](#1-volver-a-hacer-las-transformaciones)
+      - [2. Predicciones para los nuevos
+        valores](#2-predicciones-para-los-nuevos-valores)
+      - [3. Cálculo del error y analizar
+        resultados](#3-calculo-del-error-y-analizar-resultados)
+
+# Lectura de datos y descriptiva
+
+## 1\. Lectura e inspección de los datos
 
 ``` r
 datos <- read.table('Concrete_train.txt',sep="\t",header=TRUE)
@@ -70,7 +106,7 @@ características. Podemos observar como algunas lo hacen de forma normal
 Superplasticizer). Posteriormente veremos diferentes filtros para
 intentar normalizarlas todas.
 
-## Explorar todos los pares de datos
+## 2\. Explorar todos los pares de datos
 
 ``` r
 pairs(datos) # descriptiva bivariante
@@ -85,7 +121,7 @@ resultado (Strenght). A simple vista, la que parece tener la relación
 lineal más clara con Strenght es el Cemento (cuando este incrementa,
 también lo hace la Dureza)
 
-## Descriptiva bivariante para la variable Cemento
+## 3\. Descriptiva bivariante para la variable Cemento
 
 ``` r
 plot(Strength~Cement,datos)                       # puntos
@@ -97,7 +133,7 @@ with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de
 Con esta estimación (linea roja), afirmamos pues, que la relación es
 lineal
 
-## Descriptiva bivariante para todas las variables
+## 4\. Descriptiva bivariante para todas las variables
 
 ``` r
 par(mfrow=c(2,4))
@@ -114,9 +150,9 @@ curvatura (Age, Water, BlastFurnaceSlag), por ende no presentan una
 relación lineal. Y otras sí, como el superplasticizer o el
 CoarseAggregate
 
-# 2\. Ajuste del Modelo
+# Generación de los modelos
 
-## Ajuste del Modelo lineal simple
+## Modelo 0: Ajuste del Modelo lineal simple
 
 ``` r
 mod.lm0 <- lm(Strength~Cement,datos)
@@ -192,7 +228,7 @@ abline(mod.lm0,col="red")
 
 La línea roja es el modelo lineal
 
-## Ajuste del modelo multivariado
+## Modelo 1: Ajuste del modelo multivariado
 
 ``` r
 mod.lm1 <- lm(Strength~Cement + BlastFurnaceSlag + FlyAsh +      
@@ -260,7 +296,7 @@ summary(mod.lm1)                                                    # Resumen de
     éste modelo que contiene todas las variables podemos explicar un
     63% la dureza
 
-## Selección automática de variables
+## Modelo 2: Selección automática de variables del Modelo 1
 
 ``` r
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
@@ -326,7 +362,7 @@ summary(mod.lm2)                           # Modelo con variables seleccionadas
 Al no quitar ninguna variable, tenemos el mismo modelo que el anterior
 (lm1)
 
-## Validación de las premisas
+### Validación de las premisas del Modelo 2
 
 Premisas: - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a
 los datos - **Homoscedasticidad**: Variabilidad constante - **Normalidad
@@ -374,7 +410,7 @@ plot(mod.lm2)                              # graficos para valorar premisas
         la línea de Cook (de hecho la línea no llega ni a aparecer en el
         diagrama).
 
-## Nueva descriptiva: Residuos vs variables predictoras
+### Nueva descriptiva: Residuos vs variables predictoras
 
 ``` r
 library(car)
@@ -405,7 +441,7 @@ residualPlots(mod.lm2)
   - Tendremos que aplicar transformaciones a éstas características para
     linealizarlas
 
-## Transformaciones polinomicas sobre las predictoras con poly
+## Modelo 4: Transformaciones polinómicas sobre las predictoras con poly
 
 Con poly: que se incluyen términos polinómicos de orden mayor
 
@@ -464,7 +500,7 @@ summary(mod.lm4)
     sustancial respecto respecto al modelo anterior únicamente
     transformando las variables predictoras.
 
-### Selección automática de características
+## Modelo 5: Selección automática de características del Modelo 4
 
 Seleccionamos automáticamente las características a utilizar del modelo
 anterior (lm4)
@@ -579,7 +615,7 @@ vif(mod.lm5)
     ## poly(FineAggregate, 2)    3.009788  2        1.317146
     ## poly(Age, 2)              1.207466  2        1.048259
 
-## Validación
+### Validación
 
 ``` r
 par(mfrow=c(2,2))
@@ -629,7 +665,7 @@ residualPlots(mod.lm5)
   - Aun así, las premisas más importantes son las del modelo completo,
     con todas las características, analizadas anteriormente y validadas.
 
-## Transformación BoxCox sobre la respuesta
+## Modelo 6: Transformación BoxCox sobre la respuesta del Modelo 5
 
 Transformamos ahora las estimaciones para ver si podemos mejorar aun más
 el modelo.
@@ -715,9 +751,9 @@ plot(mod.lm6)
     ninguna premisa. A parte de que la R2 se mantiene practicamente
     igual.
 
-## Observaciones influyentes
+## Modelo 7: Quitamos las observaciones influyentes del Modelo 5
 
-### 1\. Detectar los puntos
+### 1\. Detectar los puntos influyentes
 
 ``` r
 influenceIndexPlot(mod.lm5) 
@@ -801,7 +837,7 @@ pairs(datos[,-10],col=col.points,pch=19,cex=0.8)     # Dibujo por pares de las o
 seleccionados en los distintos gráficos que relacionan las
 características entre sí.
 
-## 3\. Ajuste del modelo sin observaciones influyentes
+### 3\. Ajuste del modelo sin observaciones influyentes
 
 ``` r
 datos.rm <- datos[-obs.rm ,]  # Nos creamos un nuevo data.frame sin estas observaciones
@@ -810,7 +846,7 @@ mod.lm7 <- lm(Strength~poly(Cement,2) + poly(BlastFurnaceSlag,2) + poly(FlyAsh,2
                        poly(FineAggregate,2) + poly(Age,2),datos.rm)
 ```
 
-## 4\. Comparar con el modelo anterior
+### 4\. Comparar con el Modelo 5
 
 ``` r
 summary(mod.lm7)   # Modelo nuevo sin outliers y observaciones influyentes
@@ -893,7 +929,7 @@ modelo (multiple R-squared 0.7857 en el nuevo vs 0.7798 en el antiguo)
 que nos quedamos con el antiguo. Menos transformaciones necesarias
 mejor.
 
-## Modelo final
+## Modelo final: Modelo 5
 
 ``` r
 ##-- Modelo final
@@ -906,9 +942,9 @@ plot(allEffects(mod.final))
 
 ![](informe_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
-## Testearlo con nuevos datos
+# Testear el modelo final con nuevos datos
 
-### 1\. Volver a hacer las transformaciones
+## 1\. Volver a hacer las transformaciones
 
 ``` r
 # setwd('...')
@@ -918,7 +954,7 @@ test <- read.table('Concrete_test.txt',sep="\t",header=TRUE)
 test$Strength2 <- test$Strength^lamb
 ```
 
-### 2\. Predicciones para los nuevos valores
+## 2\. Predicciones para los nuevos valores
 
 ``` r
 ##-- Predicciones
@@ -932,7 +968,7 @@ abline(0,1,col=2,lwd=2)         # Bisectriz
 
 Valores reales vs valores predichos. Buen resultado, bastante ajustado.
 
-### 3\. Cálculo del error y analizar resultados
+## 3\. Cálculo del error y analizar resultados
 
 ``` r
 ##--EQM (Error Cuadratico Medio)
