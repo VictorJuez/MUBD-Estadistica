@@ -102,10 +102,7 @@ boxplot(datos, las=2)       # boxplot de todas las variables
 ![](informe_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 En este último gráfico vemos como se distribuyen las distintas
-características. Podemos observar como algunas lo hacen de forma normal
-(Cement, CoarseAggregate, FineAggregate). Y otras no (FlyAsh, Age,
-Superplasticizer). Posteriormente veremos diferentes filtros para
-intentar normalizarlas todas.
+características.
 
 ## 2\. Explorar todos los pares de datos
 
@@ -131,8 +128,8 @@ with(datos,lines(lowess(Strength~Cement),col=2))  # estimacion no parametrica de
 
 ![](informe_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
-Con esta estimación (linea roja), afirmamos pues, que la relación es
-lineal
+Vemos que la relación entre el cemento y la dureza es lineal (línea roja
+tiene apenas curvatura).
 
 ## 4\. Descriptiva bivariante para todas las variables
 
@@ -154,6 +151,9 @@ CoarseAggregate
 # Generacion de los modelos
 
 ## Modelo 0: Ajuste del Modelo lineal simple
+
+Vamos a generar un modelo que explique únicamente como el Cemento afecta
+a la Dureza, descartando el resto de características.
 
 ``` r
 mod.lm0 <- lm(Strength~Cement,datos)
@@ -181,7 +181,7 @@ summary(mod.lm0)
 
   - **Residuals**: descriptiva de los residuos (errores).
   - **Coeficientes**:
-      - *Estimate*: coeficientes del termino independiente (intercept) y
+      - *Estimate*: coeficientes del término independiente (intercept) y
         el cemento. Por cada unidad de cemento que yo agrego, la dureza
         augmenta en 0.08 uds.
       - *Std. Error*: Error estándar de la estimación, en el caso del
@@ -189,13 +189,13 @@ summary(mod.lm0)
         0.005
       - *t value*: Es la relación que hay entre la Estimación y el Std.
         Error (Estimación/Error). Nos interesa que sea lo mayor posible,
-        lo que signfica que hay un error pequeno
+        lo que signfica que hay un error pequeño
       - *Pr(\>|t|)*: P-valor de los coeficientes. Utiliza el t-valor
-        para hacerlo. Un valor muy pequeno de este (\< 0.05) implica que
-        descartamos la hipótesis nula, es decir, que el coeficiente sea
-        0. Dicho de otra forma, en el caso del cemento, implica que éste
-        está influyendo sobre la variable respuesta (Dureza). Nos
-        aseguramos que no es un coeficiente igual a 0, lo que por
+        para calcularlo. Un valor muy pequeño de este (\< 0.05) implica
+        que descartamos la hipótesis nula, es decir, que el coeficiente
+        sea 0. Dicho de otra forma, en el caso del cemento, implica que
+        éste está influyendo sobre la variable respuesta (Dureza).
+        Estamos seguros que no es un coeficiente igual a 0, lo que por
         contra, significaría que el cemento no tiene ningún impacto
         sobre la Dureza (por cada unidad de cemento que agrego, la
         dureza varia +- 0) y por tanto no deberíamos utilizarla como
@@ -208,14 +208,14 @@ summary(mod.lm0)
       - p-valor entre (0.01 y 0.05): `*`,
       - p-valor entre (0.05 y 0.1): `.`,
       - p-valor entre (0.1 y 1): `  `
-  - **Residual standard error**: Como la media de los residuos, lo que
-    espero equivocarme utilizando el modelo
+  - **Residual standard error**: Como la media de los residuos, es lo
+    que yo espero equivocarme utilizando el modelo.
   - **Multiple R-squared**: \(R^2\) Es el porcentaje de variabilidad que
     explica el modelo. Cerca de 0 no explica nada, cerca del 1 explica
     mucho. En este caso, considerando que tenemos una única variable
     (Cemento), un valor de 0.25 está bastante bien, podemos explicar un
     25% de la dureza utilizando el cemento.
-  - **F-static**: si el modelo en general explica algo o no
+  - **F-static**: si el modelo en general explica algo o no.
 
 <!-- end list -->
 
@@ -227,7 +227,11 @@ abline(mod.lm0,col="red")
 
 ![](informe_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
-La línea roja es el modelo lineal
+  - En este gráfico vemos como el modelo explica la Dureza en función
+    del Cemento.
+  - Comparándolo con el [resultado
+    real](#3-descriptiva-bivariante-para-la-variable-cemento) vemos que
+    el modelo está bastante bien.
 
 ## Modelo 1: Ajuste del modelo multivariado
 
@@ -293,11 +297,13 @@ summary(mod.lm1)                                                    # Resumen de
     CoarseAggregate).
   - Importante destacar el R-squared: ha augmentado considerablemente
     (0.6253) en comparación al 0.25 que teníamos en el modelo anterior
-    con solo el Cemento como variable. Ésto nos indica que ahora con
-    éste modelo que contiene todas las variables podemos explicar un
-    63% la dureza
+    con solo el Cemento como variable. esto nos indica que ahora con
+    este modelo que contiene todas las variables podemos explicar un 63%
+    la dureza.
 
 ## Modelo 2: Seleccion automatica de variables del Modelo 1
+
+Ahora vamos a generar un modelo utilizando todas las características.
 
 ``` r
 mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
@@ -318,13 +324,12 @@ mod.lm2 <- step(mod.lm1)                   # Seleccionar variables
     ## - Cement            1   14285.8  85574 3403.0
     ## - Age               1   31544.5 102833 3532.8
 
-  - AIC: Se mira qué bueno es el modelo y por otra parte el numero de
-    parámetros que tiene el modelo. Nos interesa que el modelo sea lo
-    más bueno posible (verosimilitud) con el mínimo de variables
-    posibles. Cuanto más pequeno es el AIC mejor.
+  - **AIC** (Akaike Information Criteria): Cuanto más pequeño es su
+    valor, mejor. El indicador será más pequeño cuando menos variables
+    se utilicen en el modelo y más verosimil sea (bien ajustado).
   - En la tabla anterior observamos el AIC resultante por cada variable
     que quitamos al modelo. En este caso, si NO quitamos ninguna,
-    tenemos el valor más pequeno del AIC, que es lo que buscamos.
+    tenemos el valor más pequeño del AIC, que es lo que buscamos.
 
 <!-- end list -->
 
@@ -365,11 +370,20 @@ Al no quitar ninguna variable, tenemos el mismo modelo que el anterior
 
 ### Validacion de las premisas del Modelo 2
 
-Premisas: - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a
-los datos - **Homoscedasticidad**: Variabilidad constante - **Normalidad
-de los residuos**: Los errores son normales - **Independencia**: La
-muestra es aleatoria simple y el resultado de una observación no
-condiciona el resto
+Premisas:
+
+  - **Linealidad**: Una recta/plano/hiperplano se ajusta bien a los
+    datos. Los residuos deben distribuirse uniformemente por encima y
+    por debajo del cero a lo largo de los valores predichos.
+  - **Homoscedasticidad**: Variabilidad constante. Los residuos deben
+    distanciarse del cero lo mismo a lo largo de los valores predichos
+    (no tener forma de embudo).
+  - **Normalidad de los residuos**: Los errores son normales. Los
+    residuos deben ajustarse a la recta de Normalidad.
+  - **Independencia**: La muestra es aleatoria simple y el resultado de
+    una observación no condiciona el resto.
+
+<!-- end list -->
 
 ``` r
 par(mfrow=c(2,2))                          # ventana para 4 gr?ficos
@@ -378,40 +392,53 @@ plot(mod.lm2)                              # graficos para valorar premisas
 
 ![](informe_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
-  - **Residuals vs Fitted**: Nos indica la Homoscedasticidad, para
-    cumplirla, los residuos, deberían distribuirse de la misma forma por
-    todo el rango de los ‘Fitted values’ (estimaciones). Así pues, vemos
-    que no es el caso, ya que cuando éstos son pequenos, los residuos
-    oscilan menos (muy cercanos a la linea roja). Y en cambio cuando
-    mayor son los las estimaciones, más dispersos son los residuos
-  - **Scale-Location**: Con el mismo propósito que el anterior, pero
-    estandarizando los residuos, de forma que estos son todos positivos.
-    (Es como si plegaramos el diagrama anterior por la mitad). Con esto,
-    nos podemos fijar en la línea roja, y en este caso observar que
-    tiene una tendencia decreciente, es decir, que cuando mayor es la
-    estimación más grande es el residuo (más error tenemos).
-  - **Normal Q-Q**: Nos sirve para ver si el las estimaciones estan
-    distribuidos de forma normal o no. En este caso vemos que a
-    excepción de valores muy pequenos y grandes sí que lo hacen.
+  - **Linealidad**: Se cumple poco. (Residuals vs Fitted) vemos que los
+    residuos no acaban de distribuirse de forma uniforme por encima y
+    por debajo del cero a lo largo de los valores predichos, causando
+    una curvatura en la media, por lo que no es lineal.
+  - **Homocedasticidad**: No se cumple. (Residuals vs Fitted) Tiene un
+    poco forma de embudo, en valores predichos menores los residuos
+    están más concentrados en el 0 y cuándo son valores más grandes, la
+    dispersión de residuos augmenta.
+  - **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los
+    residuos se ajustan bastante bien a la recta de Normalidad.
+  - **Independencia**: Suponemos que se cumple. (Depende del buen diseño
+    de la recogida de datos).
+
+Cómo interpretar los gráficos:
+
+  - **Residuals vs Fitted**: Nos indica la Homocedasticidad y la
+    Linealidad.
+      - Linealidad: Se cumple si la línea roja es horizontal y se
+        mantiene constante a lo largo de los valores estimados.
+      - Homocedasticidad: Se cumple si los residuos se distancian del
+        cero lo mismo a lo largo de los valores predichos (no tener
+        forma de embudo).
+  - [**Scale-Location**](https://boostedml.com/2019/03/linear-regression-plots-scale-location-plot.html):
+    Nos da la misma información que el anterior pero de forma más clara.
+    Ya que normaliza los residuos y estos son solo positivos.
   - [**Residuals vs
     Leverage**](https://boostedml.com/2019/03/linear-regression-plots-residuals-vs-leverage.html):
-    Este gráfico nos sirve para ver como cambia la dispersión de los
-    residuos estandarizados cuando el
-    [leverage](https://en.wikipedia.org/wiki/Leverage_\(statistics\))
-    (puntos de influencia) incrementan. La dispersión de los residuos
-    estandarizados no deberían cambiar cuando los puntos de influencia
-    augmentan (nos estamos fijando en los puntos negros): en este caso
-    parece que disminuye, lo que indica homoscedesticidad.
-      - Por otro lado los puntos con un gran ‘leverage’ (palanca) son
-        puntos de **gran influencia**, por lo que eliminarlos harían
-        cambiar mucho el modelo. Para este propósito nos fijamos en la
-        línea de Cook (la cual mesura el efecto de eliminar el valor).
-        Todos los puntos fuera de ésta línea indican que tienen una gran
-        influencia. En este caso vemos que no hay ninguno que esté furea
-        la línea de Cook (de hecho la línea no llega ni a aparecer en el
-        diagrama).
+    Nos indica la Homocedasticidad y si hay puntos de gran influencia.
+      - Este gráfico nos sirve para ver como cambia la dispersión de los
+        residuos estandarizados segun el
+        [leverage](https://en.wikipedia.org/wiki/Leverage_\(statistics\))
+        (nivel de palanca).
+      - Homocedasticidad: La dispersión de los residuos estandarizados
+        no debería cambiar a lo largo de los valores del leverage. En
+        este último caso disminuye, lo que indica Homocedasticidad.
+      - Puntos de gran influencia: Debemos fijarnos el la línea de Cook
+        (línea roja discontínua). Todos los valores fuera de esta línea
+        son puntos de **gran influencia**. Los puntos de gran influencia
+        tienen mucha influencia en el modelo por lo que eliminarlos
+        haría mejorarlo. En este último caso, vemos que no hay ningun
+        punto fuera de la línea (de hecho la línea no llega ni a
+        aparecer en el gráfico) y no se detectan puntos de influencia.
 
 ### Nueva descriptiva: Residuos vs variables predictoras
+
+Hay que mejorar las premisas del modelo anterior, y empezamos analizando
+las variables predictoras para ver si hay que transformarlas.
 
 ``` r
 library(car)
@@ -433,14 +460,11 @@ residualPlots(mod.lm2)
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 
-  - Aquí podemos observar por cada característica como varia la
-    dispersión de los residuos. Lo que buscamos, otra vez, es que ésta
-    no varie a lo largo de los valores de cada característica. Como
-    vemos, las características que lo cumplen son: Cement,
-    CoarseAggregate y Water. En las otras, en cambio, observamos
-    curvaturas lo cual indican justamente lo contrario.
-  - Tendremos que aplicar transformaciones a éstas características para
-    linealizarlas
+  - Solo los residuos de las características Cemento, FineAggregate y
+    FlyAsh son mínimamente lineales, pero las otras presentan mucha
+    curvatura.
+  - Tendremos que aplicar transformaciones a estas características
+    predictoras para linealizarlas.
 
 ## Modelo 4: Transformaciones polinomicas sobre las predictoras con poly
 
@@ -490,21 +514,22 @@ summary(mod.lm4)
     ## F-statistic: 162.9 on 15 and 690 DF,  p-value: < 2.2e-16
 
   - Vemos todos los coeficientes de todas las características aplicando
-    transformaciones polinomicas de 1er y 2o grado y la significancia de
+    transformaciones polinómicas de 1er y 2o grado y la significancia de
     cada una de ellas. A excepción del ‘CoarseAggregate’, que como
-    habiamos observado anteriormente ya seguía una forma lineal y no
-    requeria de transformación.
+    habíamos observado anteriormente ya seguía una forma lineal y no
+    requería de transformación.
   - Por otro lado, vemos que el error estándar ha disminuido (7.92 vs
-    10.0) en el modelo anterior, y que el R-squared ha augmentado
-    (0.7798 vs 0.6253), por lo que ahora podemos explicar un 0.7798 de
-    la dureza con este modelo. En general, hemos obtenido una mejora
-    sustancial respecto respecto al modelo anterior únicamente
-    transformando las variables predictoras.
+    10.0) en el [modelo
+    anterior](#modelo-2-seleccion-automatica-de-variables-del-modelo-1),
+    y que el R-squared ha augmentado (0.7798 vs 0.6253), por lo que
+    ahora podemos explicar un 0.7798 de la dureza con este modelo. En
+    general, hemos obtenido una mejora sustancial respecto respecto al
+    modelo anterior únicamente transformando las variables predictoras.
 
 ## Modelo 5: Seleccion automatica de caracteristicas del Modelo 4
 
-Seleccionamos automáticamente las características a utilizar del modelo
-anterior (lm4)
+Seleccionamos automáticamente las características a utilizar del [modelo
+anterior](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly)
 
 ``` r
 mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
@@ -541,7 +566,7 @@ mod.lm5 <- step(mod.lm4) # Seleccion automatica de caracteristicas
     ## - poly(Cement, 2)            2     28692 70591 3277.2
     ## - poly(Age, 2)               2     51460 93360 3474.5
 
-Vemos que lo que da mejor resultado es elminiar el CoarseAggregate, ya
+Vemos que lo que da mejor resultado es eliminar el CoarseAggregate, ya
 que aparece el primero de la lista y el AIC resultante tras su
 eleminación es el menor de todos (2912.9), respecto (1214.9) si no
 elimináramos ninguna.
@@ -586,8 +611,10 @@ summary(mod.lm5) # Descriptiva del modelo
 
 Tras eliminar el CoarseAggregate y hacer la descriptiva del modelo,
 podemos observar que el resultado no varia significativamente respecto
-el modelo anterior (lm4). El multipple R-squared se mantiene igual y
-solo disminuye muy levemente el error estándar.
+el [modelo anterior
+(4)](#modelo-4-transformaciones-polinomicas-sobre-las-predictoras-con-poly).
+El multiple R-squared se mantiene igual y solo disminuye muy levemente
+el error estándar.
 
 ### Colinealidad
 
@@ -598,8 +625,7 @@ estan entre si) utilizamos el VIF:
     nos indica que hay una relación entre las características, es decir,
     que las características en cuestión nos explican lo mismo, por lo
     que no tiene sentido tenerlas juntas en el modelo.
-  - Por contra, un VIF menor a 5 nos indica que las variables
-    predictoras no estan muy relacionadas entre si. Es lo que buscamos.
+  - Buscamos un VIF menor a 5.
 
 <!-- end list -->
 
@@ -629,12 +655,14 @@ plot(mod.lm5) # Validación de las premisas
     residuos se distribuyen uniformemente por encima y por debajo del
     cero a lo largo de los valores predichos. Se ve claramente con la
     línea roja recta en el 0.
-  - **Homocedasticidad**: Se cumple. (Residuals vs Fitted) En
-    comparación al modelo lm2, la homoscedesticidad ha mejorado un
-    poco, ahora vemos una mejor distribución de los residuales a lo
-    largo de las estimaciones, aunque seguimos teniendo un poco forma de
-    embudo (residuos más concentrados en valores predichos pequenos y
-    más dispersos en valores predichos grandes)
+  - **Homocedasticidad**: Ha mejorado. (Residuals vs Fitted) En
+    comparación al [modelo de
+    referencia](#modelo-2-seleccion-automatica-de-variables-del-modelo-1),
+    la homoscedesticidad ha mejorado un poco, ahora vemos una mejor
+    distribución de los residuales a lo largo de las estimaciones,
+    aunque seguimos teniendo un poco forma de embudo (residuos más
+    concentrados en valores predichos pequeños y más dispersos en
+    valores predichos grandes)
   - **Normalidad de los residuos**: Se cumple. (Normal Q-Q). Los
     residuos se ajustan bastante bien a la recta de Normalidad
   - **Independencia**: Suponemos que se cumple. (Depende del buen diseño
@@ -658,13 +686,13 @@ residualPlots(mod.lm5)
     ## poly(Age, 2)                                        
     ## Tukey test                  -0.9631           0.3355
 
-  - En el plot de arriba tenemos el gráfico (Residuals vs Fitted) para
-    cada característica por separado.
-  - Vemos que todas cumplen la premisa de Linealidad, pero no la de
-    Homocedasticidad, ya que en diversas características los residuos no
-    estan distribuidos uniformemente (Age, Superplasticizer)
-  - Aun así, las premisas más importantes son las del modelo completo,
-    con todas las características, analizadas anteriormente y validadas.
+Comparamos con las [características del modelo
+2](#nueva-descriptiva-residuos-vs-variables-predictoras) y vemos que:
+
+  - Se han linealizado correctamente todas ellas, ya no hay presencia de
+    curvaturas.
+  - Aun así hay Homocedasticidad, ya que en diversas características los
+    residuos no estan distribuidos uniformemente (Age, Superplasticizer)
 
 ## Modelo 6: Transformacion BoxCox sobre la respuesta del Modelo 5
 
@@ -733,7 +761,8 @@ summary(mod.lm6)
 
 Comparamos otra vez con los modelos anteriores y vemos:
 
-  - El error estándar a disminuido de 7.792 en el lm4 vs 1.596 ahora
+  - El error estándar a disminuido de 7.792 en el Modelo 4 vs 1.596
+    ahora
   - El multiple R-squared ha augmentado muy levemente: 0.7798 vs 0.7824
     ahora
 
@@ -747,10 +776,10 @@ plot(mod.lm6)
 ![](informe_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
   - Vemos que corregimos los problemas de normalidad, pero que seguimos
-    teniendo parabola homesteicedad
-  - Nos quedariamos con el modelo 5, que es mas simple y no deteriora
-    ninguna premisa. A parte de que la R2 se mantiene practicamente
-    igual.
+    teniendo Homocedasticidad.
+  - Nos quedaríamos con el [modelo 5](#validacion), que es mas simple y
+    no deteriora ninguna premisa. A parte de que la R2 se mantiene
+    prácticamente igual.
 
 ## Modelo 7: Quitamos las observaciones influyentes del Modelo 5
 
@@ -766,11 +795,11 @@ influenceIndexPlot(mod.lm5)
     influencia a posteriori (81 y 147).
 
   - **Residuals**: Una observación, para estar bien explicada por el
-    modelo, debería tener un residuo entre -2 y 2 aproximadamente. En el
-    diagrama vemos que la observacion 248 tiene un residuo de 4. es
+    modelo, debería tener un residuo entre -2 y 2 aproximádamente. En el
+    diagrama vemos que la observación 248 tiene un residuo de 4. es
     decir, muy mal explicada por el modelo.
 
-  - **P-valor**: Coincidiendo con la observacion anterior (248), vemos
+  - **P-valor**: Coincidiendo con la observación anterior (248), vemos
     que ésta observación tiene un p-valor menor que 0.5, en concreto
     0.2, lo que implica que lo descartamos.
 
@@ -786,13 +815,13 @@ influenceIndexPlot(mod.lm5)
         de las observaciones 65 y 81 se alejan mucho de los valores
         reales.
       - **Cook’s distance**: Muestra cómo cambiaría el modelo si
-        elmináramos una determinada observación. Es decir, si tendría
-        un gran efecto o no eliminar dichos puntos del modelo. Nos
-        referimos a éste tipo de influencia como a posteriori porque nos
-        indica como cambiará el resultado si quitamos dichas
-        observaciones (post-resultado). Por otro lado, los
-        **hat-values** sólo nos indica aquellos puntos con gran palanca,
-        sin saber qué efecto tiene quitarlos del modelo (pre-resultado).
+        elmináramos una determinada observación. A mayor distancia, más
+        efecto tendrá eliminarlos del modelo. Nos referimos a este tipo
+        de influencia como a posteriori porque nos indica como cambiará
+        el resultado si quitamos dichas observaciones (post-resultado).
+        Por otro lado, los **hat-values** sólo nos indica aquellos
+        puntos con gran palanca, sin saber qué efecto tiene quitarlos
+        del modelo (pre-resultado).
 
 <!-- end list -->
 
@@ -810,20 +839,10 @@ influencePlot(mod.lm5)
     ## 147 -3.035049 0.11508759 0.07892921
     ## 248  3.871532 0.02125956 0.02127438
 
-Gráfico de los Hat-Values, se ve claramente cómo los valores 81 y 65 son
-los más influyentes (a priori).
-
 ### 2\. Eliminar los influyentes del modelo
 
-**No estoy seguro de esto, pero es lo que deduzco :)** -\> Eliminamos
-los puntos 81, 147 y 248. Vemos que el punto 65 no está includido, ésto
-es porqué:
-
-1.  Mejor eliminar las menos observaciones posibles
-2.  De los indicadores de puntos influyentes, los hat-values son los
-    menos relevantes.
-
-<!-- end list -->
+Eliminamos los puntos 81, 147 y 248, que corresponden a los valores
+detectados en el gráfico de la distancia de Cook y del p-valor.
 
 ``` r
 obs.rm <- c(81,147,248)                              # Eliminar las 2 mas influyentes a posteriori (81 y 147) y la peor explicada (248)
@@ -834,7 +853,7 @@ pairs(datos[,-10],col=col.points,pch=19,cex=0.8)     # Dibujo por pares de las o
 
 ![](informe_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
-Éste plot nos muestra donde se encuentran los puntos influyentes
+Este plot nos muestra donde se encuentran los puntos influyentes
 seleccionados en los distintos gráficos que relacionan las
 características entre sí.
 
