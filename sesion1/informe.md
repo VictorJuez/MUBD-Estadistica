@@ -1,6 +1,8 @@
 MUBD - Estadistica - Sesion 1
 ================
 
+[Codigo fuente](./s1_result.R)
+
 ## Ejercicio 1.1
 
 1.  Crear un data.frame con los siguientes datos
@@ -175,7 +177,7 @@ boxplot(datos2$air_time, main="Air time (minutes)")
 
 <p>
 
-![](informe_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->![](informe_files/figure-gfm/unnamed-chunk-8-2.png)<!-- -->
+![](informe_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->![](informe_files/figure-gfm/unnamed-chunk-9-2.png)<!-- -->
 
 </p>
 
@@ -273,7 +275,7 @@ smoothScatter(datos2$arr_delay,
 
 <p>
 
-![](informe_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](informe_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 </p>
 
@@ -364,7 +366,7 @@ boxplot(datos2$arr_delay~datos2$month,
 
 <p>
 
-![](informe_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](informe_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 </p>
 

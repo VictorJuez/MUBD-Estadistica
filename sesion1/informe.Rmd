@@ -7,6 +7,8 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+[Codigo fuente](./s1_result.R)
+
 ## Ejercicio 1.1
 
 1.  Crear un data.frame con los siguientes datos
@@ -60,7 +62,7 @@ df1
 2. Inspeccionar los datos: num. filas y columnas, visualizar los datos y descriptiva global
 3. ¿Cuanto tiempo estuvo en el aire el vuelo 251 y con numero de cola N855UA?
 
-```{r flights, eval=FALSE}
+```{r}
 #1
 datos2 = read.table('flights.txt',header=TRUE,sep='\t',dec = '.', na.strings = "@", stringsAsFactors = TRUE)
 ```
