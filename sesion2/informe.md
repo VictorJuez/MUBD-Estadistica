@@ -11,10 +11,48 @@ datos <- read.table('Mobiles.txt',header=TRUE,sep=";",dec=".",na.strings=c("NA",
 
 ``` r
 summary(datos$Bill)      # Descriptiva de los datos numerica
+```
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ##    0.00   25.00   35.00   46.85   60.00  300.00       5
+
+``` r
 hist(datos$Bill)         # Descriptiva de los datos grafica
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
 t.test(datos$Bill)       # Estimacion de la media con su IC y hipotesis de que la media es 0 (por defecto)
+```
+
+    ## 
+    ##  One Sample t-test
+    ## 
+    ## data:  datos$Bill
+    ## t = 14.864, df = 173, p-value < 2.2e-16
+    ## alternative hypothesis: true mean is not equal to 0
+    ## 95 percent confidence interval:
+    ##  40.62927 53.07188
+    ## sample estimates:
+    ## mean of x 
+    ##  46.85057
+
+``` r
 t.test(datos$Bill,mu=50) # Hipotesis de que la media poblacional es 50
 ```
+
+    ## 
+    ##  One Sample t-test
+    ## 
+    ## data:  datos$Bill
+    ## t = -0.99919, df = 173, p-value = 0.3191
+    ## alternative hypothesis: true mean is not equal to 50
+    ## 95 percent confidence interval:
+    ##  40.62927 53.07188
+    ## sample estimates:
+    ## mean of x 
+    ##  46.85057
 
 ## Estimacion de la desviacion poblacional
 
@@ -26,9 +64,21 @@ n <- sum(!is.na(datos$Bill))             # tama?o muestral. Valores que no son m
 chi2 <- qchisq(0.025,n-1)                # cuantil 0.025 de una chi-cuadrado con (n-1) grados de libertad
 chi1 <- qchisq(0.975,n-1)                # cuantil 0.975 de una chi-cuadrado con (n-1) grados de libertad
 (LI <- (n-1)*s2/chi1)                    # Limite inferior del IC de la varianza
+```
+
+    ## [1] 1415.264
+
+``` r
 (LS <- (n-1)*s2/chi2)                    # Limite superior del IC de la varianza  
+```
+
+    ## [1] 2159.742
+
+``` r
 sqrt(c(LI,LS))                           # IC para la desviacion tipica (sqrt = raiz cuadrada)
 ```
+
+    ## [1] 37.62000 46.47302
 
 ### Se cumple la normalidad?
 
@@ -38,6 +88,8 @@ qqnorm(datos$Bill)                       # Distribucion empirica vs teorica
 qqline(datos$Bill,col=2)                 # Los puntos al no situarse sobre la linea, no son Normales
 ```
 
+![](informe_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+
 ### Alternativa: bootstrap
 
 ``` r
@@ -46,22 +98,64 @@ qqline(datos$Bill,col=2)                 # Los puntos al no situarse sobre la li
 set.seed(12345)                                                        # Se fija una semilla para que todas las simulaciones sean iguales
 m <- replicate(10000, sd(sample(datos$Bill, replace=TRUE),na.rm=TRUE)) # Se generan 10000 muestras y para cada una de ellas se calcula la desviacion
 hist(m)                                                                # Histograma de las desviaciones 
+```
+
+![](informe_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+
+``` r
 quantile(m,probs=c(0.025, 0.975))                                      # Se calcula el IC95% cogiendo los cuantiles 0.025 y 0.975
 ```
+
+    ##     2.5%    97.5% 
+    ## 30.22804 52.50467
 
 ## Estimacion de una proporcion
 
 ``` r
 ##-- Probabilidad de que un estudiante tenga una tarjeta prepago
 (e <- sum(datos$PlanType=='Prepaid',na.rm=TRUE)) # Numero de estudiantes con tarjeta prepago
+```
+
+    ## [1] 98
+
+``` r
 (n <- sum(!is.na(datos$PlanType)))               # Numero de estudiantes totales que no tienen missing esta variable (OJO: no n <- length(datos$PlanType))
+```
+
+    ## [1] 174
+
+``` r
 prop.test(e,n)                                   # Estimacion de una probabilidad
 ```
+
+    ## 
+    ##  1-sample proportions test with continuity correction
+    ## 
+    ## data:  e out of n, null probability 0.5
+    ## X-squared = 2.5345, df = 1, p-value = 0.1114
+    ## alternative hypothesis: true p is not equal to 0.5
+    ## 95 percent confidence interval:
+    ##  0.4860814 0.6375190
+    ## sample estimates:
+    ##         p 
+    ## 0.5632184
 
 ``` r
 ##-- Funcion para pocos datos (no asume normalidad)
 binom.test(e,n)
 ```
+
+    ## 
+    ##  Exact binomial test
+    ## 
+    ## data:  e and n
+    ## number of successes = 98, number of trials = 174, p-value = 0.1111
+    ## alternative hypothesis: true probability of success is not equal to 0.5
+    ## 95 percent confidence interval:
+    ##  0.4861066 0.6381392
+    ## sample estimates:
+    ## probability of success 
+    ##              0.5632184
 
 # Ejercicios
 
@@ -88,15 +182,34 @@ datos2 <- read.table('flights.txt',header=TRUE,sep="\t",dec=".",na.strings="@")
 t.test(datos2$arr_delay)
 ```
 
+    ## 
+    ##  One Sample t-test
+    ## 
+    ## data:  datos2$arr_delay
+    ## t = 88.39, df = 327345, p-value < 2.2e-16
+    ## alternative hypothesis: true mean is not equal to 0
+    ## 95 percent confidence interval:
+    ##  6.742478 7.048276
+    ## sample estimates:
+    ## mean of x 
+    ##  6.895377
+
 ``` r
 # 3
 qqnorm(datos2$arr_delay)
 qqline(datos2$arr_delay,col=2)
+```
 
+![](informe_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
 set.seed(12345)
 m <- replicate(1000, sd(sample(datos2$arr_delay, replace=TRUE),na.rm=TRUE))
 quantile(m,probs=c(0.05, 0.95))
 ```
+
+    ##       5%      95% 
+    ## 44.26672 44.98460
 
 ``` r
 # 4
@@ -104,6 +217,18 @@ e <- sum(datos2$arr_delay>0,na.rm=TRUE)
 n <- sum(!is.na(datos2$arr_delay))
 prop.test(e,n,conf.level=0.99)
 ```
+
+    ## 
+    ##  1-sample proportions test with continuity correction
+    ## 
+    ## data:  e out of n, null probability 0.5
+    ## X-squared = 11493, df = 1, p-value < 2.2e-16
+    ## alternative hypothesis: true p is not equal to 0.5
+    ## 99 percent confidence interval:
+    ##  0.4040994 0.4085247
+    ## sample estimates:
+    ##         p 
+    ## 0.4063101
 
 ## Ejercicio 2.2
 
@@ -130,17 +255,60 @@ datos2$origin2 <- ifelse(datos2$origin=="JFK","JFK","Other")
 t.test(arr_delay~origin2,datos2,var.equal=TRUE)
 ```
 
+    ## 
+    ##  Two Sample t-test
+    ## 
+    ## data:  arr_delay by origin2
+    ## t = -12.181, df = 327344, p-value < 2.2e-16
+    ## alternative hypothesis: true difference in means is not equal to 0
+    ## 95 percent confidence interval:
+    ##  -2.339810 -1.691206
+    ## sample estimates:
+    ##   mean in group JFK mean in group Other 
+    ##            5.551481            7.566989
+
 ``` r
 # 3
-with(datos2,t.test(arr_delay,dep_delay,paired=TRUE,conf=0.999))
-t.test(arr_delay,dep_delay,datos2,paired=TRUE,conf=0.999)
+#with(datos2,t.test(arr_delay,dep_delay,paired=TRUE,conf=0.999))
+#t.test(arr_delay,dep_delay,datos2,paired=TRUE,conf=0.999)
 t.test(datos2$arr_delay,datos2$dep_delay,paired=TRUE,conf=0.999)
+```
+
+    ## 
+    ##  Paired t-test
+    ## 
+    ## data:  datos2$arr_delay and datos2$dep_delay
+    ## t = -179.46, df = 327345, p-value < 2.2e-16
+    ## alternative hypothesis: true difference in means is not equal to 0
+    ## 99.9 percent confidence interval:
+    ##  -5.763553 -5.556005
+    ## sample estimates:
+    ## mean of the differences 
+    ##               -5.659779
+
+``` r
 attach(datos2)
 ```
 
 ``` r
 # 4 
 library(PairedData)
+```
+
+    ## Loading required package: MASS
+
+    ## Loading required package: gld
+
+    ## Loading required package: mvtnorm
+
+    ## 
+    ## Attaching package: 'PairedData'
+
+    ## The following object is masked from 'package:base':
+    ## 
+    ##     summary
+
+``` r
 n <- 10000
 datos2.sub <- subset(datos2,arr_delay<180)
 x <- datos2.sub$dep_delay[1:n]
@@ -148,6 +316,12 @@ y <- datos2.sub$arr_delay[1:n]
 pd <- paired(x,y)
 plot(pd,type="BA") + xlim(-40,20)
 ```
+
+    ## Warning: Removed 1187 rows containing non-finite values (stat_smooth).
+
+    ## Warning: Removed 1187 rows containing missing values (geom_point).
+
+![](informe_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 ## Ejercicio 2.3
 
@@ -166,16 +340,32 @@ plot(pd,type="BA") + xlim(-40,20)
 boxplot(arr_delay~origin2,datos2)
 ```
 
+![](informe_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+
 ``` r
 # 2
 datos2.sub <- subset(datos2, datos2$arr_delay>0)
 boxplot(arr_delay~origin2,datos2.sub,log="y")
 ```
 
+![](informe_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+
 ``` r
 # 3
 var.test(arr_delay~origin2,datos2,conf=0.99)
 ```
+
+    ## 
+    ##  F test to compare two variances
+    ## 
+    ## data:  arr_delay by origin2
+    ## F = 0.97702, num df = 109078, denom df = 218266, p-value = 9.584e-06
+    ## alternative hypothesis: true ratio of variances is not equal to 1
+    ## 99 percent confidence interval:
+    ##  0.9639276 0.9903230
+    ## sample estimates:
+    ## ratio of variances 
+    ##          0.9770233
 
 ## Ejercicio 2.4
 
@@ -211,10 +401,24 @@ t1 <- with(datos2,table(weekend,arr_delay_cat))
 mosaicplot(t1,col=3:2)
 ```
 
+![](informe_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+
 ``` r
 # 3
 prop.test(t1)
 ```
+
+    ## 
+    ##  1-sample proportions test with continuity correction
+    ## 
+    ## data:  t1, null probability 0.5
+    ## X-squared = 11493, df = 1, p-value < 2.2e-16
+    ## alternative hypothesis: true p is not equal to 0.5
+    ## 95 percent confidence interval:
+    ##  0.5920047 0.5953728
+    ## sample estimates:
+    ##         p 
+    ## 0.5936899
 
 ## Ejercicio 2.5
 
@@ -244,7 +448,21 @@ for(i in 1:nsim){
 sum(p>0.05)/nsim    # beta (probabilidad de error tipo II)
 ```
 
+    ## [1] 0.223
+
 ``` r
 # 2
 power.t.test(n=393,delta=0.2,sd=1,sig.level=0.05)
 ```
+
+    ## 
+    ##      Two-sample t test power calculation 
+    ## 
+    ##               n = 393
+    ##           delta = 0.2
+    ##              sd = 1
+    ##       sig.level = 0.05
+    ##           power = 0.7995933
+    ##     alternative = two.sided
+    ## 
+    ## NOTE: n is number in *each* group

@@ -4,7 +4,7 @@ output: github_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Lectura de datos
@@ -121,8 +121,8 @@ t.test(arr_delay~origin2,datos2,var.equal=TRUE)
 
 ```{r}
 # 3
-with(datos2,t.test(arr_delay,dep_delay,paired=TRUE,conf=0.999))
-t.test(arr_delay,dep_delay,datos2,paired=TRUE,conf=0.999)
+#with(datos2,t.test(arr_delay,dep_delay,paired=TRUE,conf=0.999))
+#t.test(arr_delay,dep_delay,datos2,paired=TRUE,conf=0.999)
 t.test(datos2$arr_delay,datos2$dep_delay,paired=TRUE,conf=0.999)
 attach(datos2)
 ```
