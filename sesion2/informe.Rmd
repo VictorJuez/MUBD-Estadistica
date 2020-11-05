@@ -8,6 +8,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 - Documentación: [MUBD-1.2.Descriptiva-con-R.pdf](./MUBD-1.2.Descriptiva-con-R.pdf) - [MUBD-2.1.Inferencia-Estadistica_summary.pdf](./MUBD-2.1.Inferencia-Estadistica_summary.pdf)
+- Codigo fuente: [Enunciado](./s2.R) - [Solucion](./s2_solucion.R)
 
 ### Table of Contents
   * [Lectura de datos](#lectura-de-datos)

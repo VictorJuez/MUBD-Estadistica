@@ -4,6 +4,7 @@ MUBD - Estadistica - Sesion 2
   - Documentación:
     [MUBD-1.2.Descriptiva-con-R.pdf](./MUBD-1.2.Descriptiva-con-R.pdf) -
     [MUBD-2.1.Inferencia-Estadistica\_summary.pdf](./MUBD-2.1.Inferencia-Estadistica_summary.pdf)
+  - Codigo fuente: [Enunciado](./s2.R) - [Solucion](./s2_solucion.R)
 
 ### Table of Contents
 
@@ -311,7 +312,13 @@ t.test(datos2$arr_delay,datos2$dep_delay,paired=TRUE,conf=0.999)
 attach(datos2)
 ```
 
-    ## The following objects are masked from datos2 (pos = 7):
+    ## The following objects are masked from datos2 (pos = 3):
+    ## 
+    ##     air_time, arr_delay, arr_time, carrier, day, dep_delay, dep_time,
+    ##     dest, distance, flight, hour, minute, month, origin, origin2,
+    ##     tailnum, year
+
+    ## The following objects are masked from datos2 (pos = 8):
     ## 
     ##     air_time, arr_delay, arr_time, carrier, day, dep_delay, dep_time,
     ##     dest, distance, flight, hour, minute, month, origin, origin2,
