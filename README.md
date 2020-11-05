@@ -1,6 +1,6 @@
-MUBD-Estadistica
+MUBD-Estadistica-2020/21
 ================
-@VictorJuez,
+[@VictorJuez](https://github.com/VictorJuez),
 05 November 2020
 
 - [Sesion 1](sesion1/informe.md)
