@@ -3,7 +3,8 @@ title: "MUBD - Estadistica - Sesion 3: Modelo Lineal"
 output: github_document
 ---
 
-Documentación: [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
+- Documentación: [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
+- Codigo fuente: [Solucion](./s3_1_resultado.R)
 
 ### Table Of Contents
 

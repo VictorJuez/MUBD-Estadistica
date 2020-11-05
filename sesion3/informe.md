@@ -1,8 +1,9 @@
 MUBD - Estadistica - Sesion 3: Modelo Lineal
 ================
 
-Documentación:
-[MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
+  - Documentación:
+    [MUBD-3.1.Modelo-lineal.pdf](./MUBD-3.1.Modelo-lineal.pdf)
+  - Codigo fuente: [Solucion](./s3_1_resultado.R)
 
 ### Table Of Contents
 
@@ -442,6 +443,11 @@ las variables predictoras para ver si hay que transformarlas.
 
 ``` r
 library(car)
+```
+
+    ## Loading required package: carData
+
+``` r
 residualPlots(mod.lm2)
 ```
 
@@ -955,6 +961,21 @@ mod.final <- mod.lm5
 
 ##-- Efectos
 library('effects')
+```
+
+    ## Registered S3 methods overwritten by 'lme4':
+    ##   method                          from
+    ##   cooks.distance.influence.merMod car 
+    ##   influence.merMod                car 
+    ##   dfbeta.influence.merMod         car 
+    ##   dfbetas.influence.merMod        car
+
+    ## Use the command
+    ##     lattice::trellis.par.set(effectsTheme())
+    ##   to customize lattice options for effects plots.
+    ## See ?effectsTheme for details.
+
+``` r
 plot(allEffects(mod.final))
 ```
 
