@@ -7,7 +7,23 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Documentación: [MUBD-3.2.Regresion-logística.pdf](./MUBD-3.2.Regresion-logística.pdf)
+- Documentación: [MUBD-3.2.Regresion-logística.pdf](./MUBD-3.2.Regresion-logística.pdf)
+- Código fuente: [s4_1.R](./s4_1.R)
+
+### Table of Contents
+
+- [1\. Construir el modelo](#1-construir-el-modelo)
+  * [Descriptiva bivariante](#descriptiva-bivariante)
+  * [Establecer categorias de referencia en variables categoricas](#establecer-categorias-de-referencia-en-variables-categoricas)
+  * [Estimar modelos con todas las variables](#estimar-modelos-con-todas-las-variables)
+  * [Seleccion automatica](#seleccion-automatica)
+  * [Validacion](#validacion)
+  * [Estimacion de un Odds Ratio](#estimacion-de-un-odds-ratio)
+  * [Estimacion de la probabilidad de pagos](#estimacion-de-la-probabilidad-de-pagos)
+  * [Curva ROC y AUC](#curva-roc-y-auc)
+  * [Calibracion del modelo](#calibracion-del-modelo)
+- [2\. Testear resultados](#2-testear-resultados)
+  * [Calcular predicciones y compararlas con valores reales](#calcular-predicciones-y-compararlas-con-valores-reales)
 
 # 1. Construir el modelo
 ```{r}

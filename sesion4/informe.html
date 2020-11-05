@@ -601,7 +601,29 @@ body {
 <body>
 
 <h1 id="mubd---estadistica---sesion-4-regresión-logística">MUBD - Estadistica - Sesion 4: Regresión Logística</h1>
-<p>Documentación: <a href="./MUBD-3.2.Regresion-logística.pdf">MUBD-3.2.Regresion-logística.pdf</a></p>
+<ul>
+<li>Documentación: <a href="./MUBD-3.2.Regresion-logística.pdf">MUBD-3.2.Regresion-logística.pdf</a></li>
+<li>Código fuente: <a href="./s4_1.R">s4_1.R</a></li>
+</ul>
+<h3 id="table-of-contents">Table of Contents</h3>
+<ul>
+<li><a href="#1-construir-el-modelo">1. Construir el modelo</a>
+<ul>
+<li><a href="#descriptiva-bivariante">Descriptiva bivariante</a></li>
+<li><a href="#establecer-categorias-de-referencia-en-variables-categoricas">Establecer categorias de referencia en variables categoricas</a></li>
+<li><a href="#estimar-modelos-con-todas-las-variables">Estimar modelos con todas las variables</a></li>
+<li><a href="#seleccion-automatica">Seleccion automatica</a></li>
+<li><a href="#validacion">Validacion</a></li>
+<li><a href="#estimacion-de-un-odds-ratio">Estimacion de un Odds Ratio</a></li>
+<li><a href="#estimacion-de-la-probabilidad-de-pagos">Estimacion de la probabilidad de pagos</a></li>
+<li><a href="#curva-roc-y-auc">Curva ROC y AUC</a></li>
+<li><a href="#calibracion-del-modelo">Calibracion del modelo</a></li>
+</ul></li>
+<li><a href="#2-testear-resultados">2. Testear resultados</a>
+<ul>
+<li><a href="#calcular-predicciones-y-compararlas-con-valores-reales">Calcular predicciones y compararlas con valores reales</a></li>
+</ul></li>
+</ul>
 <h1 id="1-construir-el-modelo">1. Construir el modelo</h1>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>datos &lt;-<span class="st"> </span><span class="kw">read.table</span>(<span class="st">&#39;bank0_train.txt&#39;</span>,<span class="dt">header=</span><span class="ot">TRUE</span>,<span class="dt">sep=</span><span class="st">&#39;;&#39;</span>,<span class="dt">stringsAsFactors =</span> <span class="ot">TRUE</span>) </span>
 <span id="cb1-2"><a href="#cb1-2"></a><span class="kw">summary</span>(datos)          <span class="co"># Descriptiva de todas las variables</span></span></code></pre></div>
