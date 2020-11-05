@@ -7,6 +7,22 @@ output: github_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+- Documentación: [MUBD-1.2.Descriptiva-con-R.pdf](./MUBD-1.2.Descriptiva-con-R.pdf) - [MUBD-2.1.Inferencia-Estadistica_summary.pdf](./MUBD-2.1.Inferencia-Estadistica_summary.pdf)
+
+### Table of Contents
+  * [Lectura de datos](#lectura-de-datos)
+  * [Estimacion de la media poblacional](#estimacion-de-la-media-poblacional)
+  * [Estimacion de la desviacion poblacional](#estimacion-de-la-desviacion-poblacional)
+    + [Se cumple la normalidad?](#se-cumple-la-normalidad)
+    + [Alternativa: bootstrap](#alternativa-bootstrap)
+  * [Estimacion de una proporcion](#estimacion-de-una-proporcion)
+- [Ejercicios](#ejercicios)
+  * [Ejercicio 2.1](#ejercicio-21)
+  * [Ejercicio 2.2](#ejercicio-22)
+  * [Ejercicio 2.3](#ejercicio-23)
+  * [Ejercicio 2.4](#ejercicio-24)
+  * [Ejercicio 2.5](#ejercicio-25)
+
 ## Lectura de datos
 ```{r}
 datos <- read.table('Mobiles.txt',header=TRUE,sep=";",dec=".",na.strings=c("NA",""))

@@ -1,6 +1,27 @@
 MUBD - Estadistica - Sesion 2
 ================
 
+  - Documentación:
+    [MUBD-1.2.Descriptiva-con-R.pdf](./MUBD-1.2.Descriptiva-con-R.pdf) -
+    [MUBD-2.1.Inferencia-Estadistica\_summary.pdf](./MUBD-2.1.Inferencia-Estadistica_summary.pdf)
+
+### Table of Contents
+
+  - [Lectura de datos](#lectura-de-datos)
+  - [Estimacion de la media
+    poblacional](#estimacion-de-la-media-poblacional)
+  - [Estimacion de la desviacion
+    poblacional](#estimacion-de-la-desviacion-poblacional)
+      - [Se cumple la normalidad?](#se-cumple-la-normalidad)
+      - [Alternativa: bootstrap](#alternativa-bootstrap)
+  - [Estimacion de una proporcion](#estimacion-de-una-proporcion)
+  - [Ejercicios](#ejercicios)
+      - [Ejercicio 2.1](#ejercicio-21)
+      - [Ejercicio 2.2](#ejercicio-22)
+      - [Ejercicio 2.3](#ejercicio-23)
+      - [Ejercicio 2.4](#ejercicio-24)
+      - [Ejercicio 2.5](#ejercicio-25)
+
 ## Lectura de datos
 
 ``` r
@@ -290,25 +311,15 @@ t.test(datos2$arr_delay,datos2$dep_delay,paired=TRUE,conf=0.999)
 attach(datos2)
 ```
 
+    ## The following objects are masked from datos2 (pos = 7):
+    ## 
+    ##     air_time, arr_delay, arr_time, carrier, day, dep_delay, dep_time,
+    ##     dest, distance, flight, hour, minute, month, origin, origin2,
+    ##     tailnum, year
+
 ``` r
 # 4 
 library(PairedData)
-```
-
-    ## Loading required package: MASS
-
-    ## Loading required package: gld
-
-    ## Loading required package: mvtnorm
-
-    ## 
-    ## Attaching package: 'PairedData'
-
-    ## The following object is masked from 'package:base':
-    ## 
-    ##     summary
-
-``` r
 n <- 10000
 datos2.sub <- subset(datos2,arr_delay<180)
 x <- datos2.sub$dep_delay[1:n]
