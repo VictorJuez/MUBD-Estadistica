@@ -67,6 +67,7 @@ datos$weather = factor(datos$weather)
 plot(count~hour, datos)
 # de 7 a 12, 13 a 19, 20 a 24, 24 a 6
 datos$hourCategory = cut(datos$hour, 6*(0:4)) # TODO: los valores que son 0 se quedan sin valor
+datos$hour = NULL
 plot(count~hourCategory, datos)
 
 ############################################################
@@ -104,7 +105,7 @@ datos$atemp = NULL
 # Pista: usa plot para cada gr�fico y las funciones lines y lowess para el suavizado
 
 par(mfrow=c(2,4))
-for(i in 7:9){
+for(i in 6:8){
   plot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
   with(datos,lines(lowess(count~datos[,i]),col=2))
 }
@@ -116,10 +117,11 @@ for(i in 7:9){
 # Pista: usa la funci�n boxplot
 
 par(mfrow=c(2,4))
-for(i in c(1, 3, 4, 5, 6)){
-  plot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
-  with(datos,lines(lowess(count~datos[,i]),col=2))
+for(i in c(1, 2, 3, 4, 5, 10)){
+  boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
 }
+
+# Holiday y working day no, y las otras vemos que tampoco, no hay categorias que distingan de forma clara el valor respuesta
 
 ############################################################
 # Seleccion de modelo y variables
@@ -127,10 +129,13 @@ for(i in c(1, 3, 4, 5, 6)){
 ##--9. Ajusta el modelo lineal con todas las variables que tengas e interpreta la salida de resultados (coeficientes, p-valores, R2, error residual...)
 # Pista: Ajusta el modelo con la funci�n lm y guardalo en un objeto. Luego, haz el summary de dicho objeto.
 
+mod.lm1 = lm(count~.,datos)
+summary(mod.lm1)
+
 
 ##--10. Realiza una selecci�n autom�tica de variables y discute que ha pasado
 # Pista: Usa la instrucci�n step para la selecci�n
-
+mod.lm2 = step(mod.lm1)
 
 ############################################################
 # Colinealidad
@@ -138,7 +143,8 @@ for(i in c(1, 3, 4, 5, 6)){
 ##-- 11. Mira la colinealidad con la instrucci�n vif del paquete car.
 ##-- �Hay que eliminar alguna variable?�Cual eliminarias si tuvieses que eliminar una?
 # Pista: Primero debes instalar y cargar el paquete car. Usa la funci�n vif para evaluar la colinealidad
-
+library(car)
+vif(mod.lm2)
 
 ############################################################
 # Validacion
@@ -147,7 +153,8 @@ for(i in c(1, 3, 4, 5, 6)){
 ##-- �Se cumplen las premisas de linealidad, normalidad, homoscedasticidad, independencia?
 # Pista: Haciendo plot del modelo podr�s evaluar las tres primeras premisas. Para la independencia, dibuja los residuos en el orden
 # que te aparecen en los datos (funciones plot y resid)
-
+par(mfrow=c(2,2))
+plot(mod.lm2)
 
 ############################################################
 # Transformacion de boxCox
@@ -155,6 +162,11 @@ for(i in c(1, 3, 4, 5, 6)){
 ##-- 13. Si crees que no se cumple alguna premisa, haz la transformaci�n de boxCox para la variable respuesta 
 ##-- Escoge el valor de lambda que maximiza la funci�n y aplicala a la respuesta (count). Prueba tambien la transformacion logaritmica
 # Pista: usa la funci�n de boxCox para conocer la lambda. Guardate las nuevas respuestas en unas nuevas variables llamadas countBC y countLog
+
+par(mfrow=c(1,1))
+bc <- boxCox(mod.lm2)
+lamb = bc$x[which.max(bc$y)]
+
 
 ############################################################
 # Nuevos modelos con respuestas transformadas
