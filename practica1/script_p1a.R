@@ -33,6 +33,7 @@
 ##-- 2.Lee los datos p1a_train.csv
 ## Pista: fija el directorio donde tienes los datos y leelos con la instruccion read.table
 datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datosOriginal = datos
 
 ##-- 3. Visualiza los datos para asegurarte que los has leido correctamente. Haz una descriptiva y elimina la variable id de tus datos por comodidad (no la utilizaras)
 ##-- Pista: para describir tus datos, usa la instrucci�n summary. Para eliminar la variable asigna el valor NULL a toda la variable
@@ -66,8 +67,9 @@ datos$weather = factor(datos$weather)
 
 plot(count~hour, datos)
 # de 7 a 12, 13 a 19, 20 a 24, 24 a 6
-datos$hourCategory = cut(datos$hour, 6*(0:4)) # TODO: los valores que son 0 se quedan sin valor
+datos$hourCategory = cut(datos$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night')) # TODO: los valores que son 0 se quedan sin valor
 datos$hour = NULL
+View(datos)
 plot(count~hourCategory, datos)
 
 ############################################################
@@ -121,7 +123,7 @@ for(i in c(1, 2, 3, 4, 5, 10)){
   boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
 }
 
-# Holiday y working day no, y las otras vemos que tampoco, no hay categorias que distingan de forma clara el valor respuesta
+# Algunas mas que otras, las que tinen boxplots muy similares en las diferentes categorias menos representativas van a ser (Holiday y working day)
 
 ############################################################
 # Seleccion de modelo y variables
@@ -136,6 +138,9 @@ summary(mod.lm1)
 ##--10. Realiza una selecci�n autom�tica de variables y discute que ha pasado
 # Pista: Usa la instrucci�n step para la selecci�n
 mod.lm2 = step(mod.lm1)
+summary(mod.lm2)
+
+# Workingday y windspeed han sido eliminadas del modelo
 
 ############################################################
 # Colinealidad
@@ -146,6 +151,8 @@ mod.lm2 = step(mod.lm1)
 library(car)
 vif(mod.lm2)
 
+# Vemos que todos los valores son menores a 5 asi que no hay que eliminar ninguna variable
+
 ############################################################
 # Validacion
 ############################################################
@@ -155,6 +162,12 @@ vif(mod.lm2)
 # que te aparecen en los datos (funciones plot y resid)
 par(mfrow=c(2,2))
 plot(mod.lm2)
+plot(resid(mod.lm2))
+
+# Forma de cono clara -> Homocedasticidad, no se cumple, hay que arreglarlo
+# linealidad -> observamos curvatura, no se cumple, hay que arreglarlo
+# Normalidad -> Se cumple pero es mejorable
+# independencia -> Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparecen, sin ningun patron que indique dependencia de las muestras
 
 ############################################################
 # Transformacion de boxCox
@@ -166,7 +179,9 @@ plot(mod.lm2)
 par(mfrow=c(1,1))
 bc <- boxCox(mod.lm2)
 lamb = bc$x[which.max(bc$y)]
-
+datos$countBC <- datos$count^lamb
+datos$countLog <- log(datos$count)
+names(datos)
 
 ############################################################
 # Nuevos modelos con respuestas transformadas
@@ -174,13 +189,37 @@ lamb = bc$x[which.max(bc$y)]
 ##-- 14. Ajusta los modelos con las dos nuevas respuestas. �Cu�l predice mejor seg�n el R2?
 # Pista: Ajusta los modelos con la instruccion lm
 
+mod.lm3 = lm(countBC~year+season+holiday+workingday+weather+temp+humidity+windspeed+hourCategory,datos)
+mod.lm3 = step(mod.lm3)
+summary(mod.lm3)
+mod.lm4 = lm(countLog~year+season+holiday+workingday+weather+temp+humidity+windspeed+hourCategory,datos)
+mod.lm4 = step(mod.lm4)
+summary(mod.lm4)
+
+# mod.lm3 con transformacion BoxCox da mejor resultado
+
 ############################################################
 # Validacion
 ############################################################
 ##-- 15. Haz la validacion para los 2 modelos anteriores
 # Pista: Haciendo plot del modelo podr�s evaluar las tres primeras premisas. Para la independencia, dibuja los residuos en el orden
 # que te aparecen en los datos (funciones plot y resid)
+par(mfrow=c(2,2))
+plot(mod.lm3)
+plot(resid(mod.lm3))
 
+# Linealidad = se cumple no hay curvatura
+# Homocedasticidad = se cumple, sigue habiendo mas dispersion en el centro que en los extremos, pero ya no tenemos forma de cono poro lo que se cumple
+# Normalidad = ha mejorado pero aun no se cumple
+
+par(mfrow=c(2,2))
+plot(mod.lm4)
+plot(resid(mod.lm4))
+
+# Peores resultados que el modelo 3
+# Homocedasticidad = no se cumple hay forma de cono
+# Normalidad = no se cumple, o se cumple menos
+# linealidad, curvatura mas destacada que en el modelo anterior
 
 ############################################################
 # Transformaciones polinomicas
@@ -189,9 +228,21 @@ lamb = bc$x[which.max(bc$y)]
 # se podria ajustar por un relaci�n no lineal de forma descriptiva
 # Pista: si has cambiado de variable respuesta, vuelve a hacer los gr�ficos bivariantes y los suavizados
 
+par(mfrow=c(2,4))
+for(i in 6:8){
+  plot(datos$countBC~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="countBC")
+  with(datos,lines(lowess(countBC~datos[,i]),col=2))
+}
+
 ##-- 17. Para aquella o aquellas variables que lo creas necesario, ajusta un polinomio con todas las variables que tengas y
 ##-- vuelve a hacer la validacion
+mod.lm5 = lm(countBC~year+season+holiday+weather+poly(temp,2)+poly(humidity,2)+poly(windspeed,2)+hourCategory,datos)
+mod.lm5 = step(mod.lm5)
+summary(mod.lm5)
 
+par(mfrow=c(2,2))
+plot(mod.lm5)
+plot(resid(mod.lm5))
 
 ############################################################
 # Observaciones influyentes

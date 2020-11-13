@@ -1,0 +1,3 @@
+- En variables ciclicas no podemos asumirlas como continuas (horas)
+- Si se transforma la variable respuesta hay que deshacer la transformacion una vez terminado el modelo
+- Coger varias muestras de test, 10 muestras y hacer la media (sample) - Alternativa poner semilla
