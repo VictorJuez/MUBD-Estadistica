@@ -244,6 +244,13 @@ par(mfrow=c(2,2))
 plot(mod.lm5)
 plot(resid(mod.lm5))
 
+# COmparacion de modelos
+summary(mod.lm1)
+summary(mod.lm2)
+summary(mod.lm3)
+summary(mod.lm4)
+summary(mod.lm5)
+
 ############################################################
 # Observaciones influyentes
 ############################################################
@@ -253,8 +260,30 @@ plot(resid(mod.lm5))
 # observaciones. Si, por ejemplo, quieres eliminar las observaciones 1, 2 y 5, entonces datos2 <- datos[-c(1,2,5),]
 # Modelo definitivo
 
+influenceIndexPlot(mod.lm5)
+# A eliminar: 2005, 6737
+cooksDistance = cooks.distance(mod.lm5)
+influencePlot(mod.lm5)
 
+datos2 = datos[-c(2005,6737,7677,3338,620),] # eliminamos todos los mayores a 0.0026
+mod.lm6 = lm(countBC~year+season+holiday+weather+poly(temp,2)+poly(humidity,2)+poly(windspeed,2)+hourCategory,datos2)
+influenceIndexPlot(mod.lm6)
+summary(mod.lm6)
+summary(mod.lm5)
+
+par(mfrow=c(2,2))
+plot(mod.lm6)
 ##-- 19. Opcional: haz todo lo que tu creas necesario para mejorar el modelo (si es que hay algo que lo pueda mejorar)
+
+mod.final = mod.lm6
+library('effects')
+plot(allEffects(mod.final))
+
+## Ver predicciones vs valores reales
+pr = predict(mod.final, datos)
+par(mfrow=c(1,1))
+plot(pr,datos$countBC)
+abline(0,1,col=2,lwd=2)    
 
 ############################################################
 #
@@ -262,7 +291,7 @@ plot(resid(mod.lm5))
 #
 ############################################################
 ##-- 20. Lee los datos test (p1a_test.csv) con la instruccion read.table
-
+datosTest = read.table('p1a_test.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
 
 ############################################################
 # Transformaciones en variables
@@ -270,6 +299,20 @@ plot(resid(mod.lm5))
 ##-- 21. Haz EXACTAMENTE las mismas transformaciones que hicieste en el conjunto de entrenamiento (tranformar a factores
 # algunas variables, eliminar variables, categorizar o cualquier otro cambio que hayas hecho). NO ELIMINES LA VARIABLE id (Identificador)
 
+## Convertir a factores
+datosTest$year = factor(datosTest$year)
+#datosTest$hour = factor(datosTest$hour)
+datosTest$season = factor(datosTest$season)
+datosTest$holiday = factor(datosTest$holiday)
+datosTest$workingday = factor(datosTest$workingday)
+datosTest$weather = factor(datosTest$weather)
+
+## Categorizar hora
+datosTest$hourCategory = cut(datosTest$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night'))
+datosTest$hour = NULL
+
+## Eliminar variables
+datosTest$atemp = NULL
 
 ############################################################
 # Calcular predicciones
@@ -278,6 +321,10 @@ plot(resid(mod.lm5))
 ##-- obtener las predicciones en la muestra test.
 # Pista: la instruccion predict debe tener 2 parametros: el modelo final y los datos test con las variables transformadas. Guardate las
 # prediciones en una variable del mismo conjunto de datos
+library(pracma)
+prediccionesBC = predict(mod.final, datosTest)
+datosTest$predicciones = nthroot(prediccionesBC, (2.6))
+
 
 ############################################################
 # Guardar fichero
