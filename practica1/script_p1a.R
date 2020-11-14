@@ -321,10 +321,14 @@ datosTest$atemp = NULL
 ##-- obtener las predicciones en la muestra test.
 # Pista: la instruccion predict debe tener 2 parametros: el modelo final y los datos test con las variables transformadas. Guardate las
 # prediciones en una variable del mismo conjunto de datos
-library(pracma)
-prediccionesBC = predict(mod.final, datosTest)
-datosTest$predicciones = nthroot(prediccionesBC, (2.6))
 
+nthroot2 <- function(x, n) {
+  sx <- sign(x)
+  return(sx * (sx * x)^(1/n))
+}
+
+prediccionesBC = predict(mod.final, datosTest)
+datosTest$predicciones = nthroot2(prediccionesBC, lamb)
 
 ############################################################
 # Guardar fichero
@@ -332,3 +336,5 @@ datosTest$predicciones = nthroot(prediccionesBC, (2.6))
 ##-- 23. Escribe un fichero con solo dos columnas el identificador y la predici�n
 # Pista: Usa la funcion write.table y sigue escrupulosamente las instrucciones del enunciado para generar este fichero
 # (quote = FALSE, sep = ";", row.names = FALSE, col.names = FALSE)
+
+write.table(datosTest[c('id','predicciones')], file='result.txt', quote = FALSE, sep = ";", row.names = FALSE, col.names = FALSE)
