@@ -50,7 +50,6 @@ datos$id = NULL
 # datos$season <- factor(datos$season) 
 
 datos$year = factor(datos$year)
-#datos$hour = factor(datos$hour)
 datos$season = factor(datos$season)
 datos$holiday = factor(datos$holiday)
 datos$workingday = factor(datos$workingday)
@@ -67,7 +66,7 @@ datos$weather = factor(datos$weather)
 
 plot(count~hour, datos)
 # de 7 a 12, 13 a 19, 20 a 24, 24 a 6
-datos$hourCategory = cut(datos$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night')) # TODO: los valores que son 0 se quedan sin valor
+datos$hourCategory = cut(datos$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night'))
 datos$hour = NULL
 View(datos)
 plot(count~hourCategory, datos)
@@ -78,7 +77,7 @@ plot(count~hourCategory, datos)
 ##-- 6.Realiza la descriptiva para todos los pares de variables que tengas como num�ricas
 # Pista: Usa la instrucci�n pairs (puede tardar unos segundos) usando solo las variables que sean numericas. Recuerda que si quieres seleccionar, por ejemplo, las variables
 # 2,4 y 6 de los datos, lo puedes hacer con datos[,c(2,4,6)]
-pairs(datos[, c(7:10)])
+pairs(datos[, c(6:10)])
 
 ############################################################
 # Eliminamos variables muy correlacionadas
@@ -112,7 +111,7 @@ for(i in 6:8){
   with(datos,lines(lowess(count~datos[,i]),col=2))
 }
 
-# No son relaciones lineales
+# Si que son relaciones lineales aunque vemos que windspeed es constante
 
 ##-- 8b. Haz los boxplots bivariantes con la respuesta (count) y las variables categ�ricas (factores)
 # �Crees que influyen en la respuesta s�lo viendo la descriptiva?
@@ -133,14 +132,21 @@ for(i in c(1, 2, 3, 4, 5, 10)){
 
 mod.lm1 = lm(count~.,datos)
 summary(mod.lm1)
+## R-squared 0.6035
+## Standard error 114.8
+## Vemos que workingday y windspeed tinenen una significancia muy baja
 
 
 ##--10. Realiza una selecci�n autom�tica de variables y discute que ha pasado
 # Pista: Usa la instrucci�n step para la selecci�n
+
 mod.lm2 = step(mod.lm1)
 summary(mod.lm2)
-
-# Workingday y windspeed han sido eliminadas del modelo
+## R-squared 0.6034
+## standard error 114.8
+## Workingday y windspeed han sido eliminadas del modelo
+datos$windspeed = NULL
+datos$workingday = NULL
 
 ############################################################
 # Colinealidad
@@ -149,9 +155,9 @@ summary(mod.lm2)
 ##-- �Hay que eliminar alguna variable?�Cual eliminarias si tuvieses que eliminar una?
 # Pista: Primero debes instalar y cargar el paquete car. Usa la funci�n vif para evaluar la colinealidad
 library(car)
-vif(mod.lm2)
-
+vif(mod.lm2) ## TODO: preguntar que variable respuesta fijarnos (GVIF, Df, o GVIF')
 # Vemos que todos los valores son menores a 5 asi que no hay que eliminar ninguna variable
+# Elminariamos las que tienen un mayor valor de vif, en este caso seria la variable season con un vif de 3.20
 
 ############################################################
 # Validacion
@@ -162,7 +168,7 @@ vif(mod.lm2)
 # que te aparecen en los datos (funciones plot y resid)
 par(mfrow=c(2,2))
 plot(mod.lm2)
-plot(resid(mod.lm2))
+plot(resid(mod.lm2)) ## TODO: como se analiza? consideramos que haya la misma varianza a lo largo de los valores
 
 # Forma de cono clara -> Homocedasticidad, no se cumple, hay que arreglarlo
 # linealidad -> observamos curvatura, no se cumple, hay que arreglarlo
@@ -181,7 +187,7 @@ bc <- boxCox(mod.lm2)
 lamb = bc$x[which.max(bc$y)]
 datos$countBC <- datos$count^lamb
 datos$countLog <- log(datos$count)
-names(datos)
+
 
 ############################################################
 # Nuevos modelos con respuestas transformadas
@@ -189,14 +195,21 @@ names(datos)
 ##-- 14. Ajusta los modelos con las dos nuevas respuestas. �Cu�l predice mejor seg�n el R2?
 # Pista: Ajusta los modelos con la instruccion lm
 
-mod.lm3 = lm(countBC~year+season+holiday+workingday+weather+temp+humidity+windspeed+hourCategory,datos)
-mod.lm3 = step(mod.lm3)
+mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + hourCategory,datos)
+mod.lm3 = step(mod.lm3) ## Validar que no se elimina ninguna variable mas
 summary(mod.lm3)
-mod.lm4 = lm(countLog~year+season+holiday+workingday+weather+temp+humidity+windspeed+hourCategory,datos)
-mod.lm4 = step(mod.lm4)
-summary(mod.lm4)
+## R-squared: 0.6317
+## standard error: 1.798
+## Vemos que el R-squared augmenta levemente respecto el modelo anterior (lm2) 0.63 vs 0.60. 
+## Por otra parte el error residual se disminuye drasticamente, 117 vs 1.78 ahora, pero hay que considerar que este modelo utiliza la transformacion de BoxCox con lo cual los valores son mucho mas pequenos que los originales y por eso el error es menor
 
-# mod.lm3 con transformacion BoxCox da mejor resultado
+mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + hourCategory,datos)
+mod.lm4 = step(mod.lm4) ## Vemos que en este caso se elimina ademas la variable holiday
+summary(mod.lm4)
+## R-squared: 0.5506 
+## standard error: 0.9978
+## Vemos que es bastante peor que utilizando BoxCox, tenemos un R-squared 0.55 vs 0.63 en el que utilizamos BoxCox. Asi que descartamos este y nos quedamos con lm3
+## mod.lm3 con transformacion BoxCox da mejor resultado
 
 ############################################################
 # Validacion
@@ -204,22 +217,21 @@ summary(mod.lm4)
 ##-- 15. Haz la validacion para los 2 modelos anteriores
 # Pista: Haciendo plot del modelo podr�s evaluar las tres primeras premisas. Para la independencia, dibuja los residuos en el orden
 # que te aparecen en los datos (funciones plot y resid)
+
 par(mfrow=c(2,2))
 plot(mod.lm3)
 plot(resid(mod.lm3))
-
-# Linealidad = se cumple no hay curvatura
-# Homocedasticidad = se cumple, sigue habiendo mas dispersion en el centro que en los extremos, pero ya no tenemos forma de cono poro lo que se cumple
-# Normalidad = ha mejorado pero aun no se cumple
+## Linealidad = se cumple, hay curvatura pero muy leve
+## Homoscedasticidad = no se cumple, sigue habiendo mas dispersion en el centro que en los extremos, pero ya no tenemos forma de cono que teniamos en el modelo lm2 por lo que ha mejorado
+## Normalidad = ha mejorado pero aun no se cumple
 
 par(mfrow=c(2,2))
 plot(mod.lm4)
 plot(resid(mod.lm4))
-
-# Peores resultados que el modelo 3
-# Homocedasticidad = no se cumple hay forma de cono
-# Normalidad = no se cumple, o se cumple menos
-# linealidad, curvatura mas destacada que en el modelo anterior
+## Peores resultados que el modelo 3
+## Homocedasticidad = no se cumple hay forma de cono inverso
+## Normalidad = no se cumple, y aun peor que en el modelo lm3
+## linealidad = no se cumple, curvatura mas destacada que en el modelo anterior
 
 ############################################################
 # Transformaciones polinomicas
@@ -229,22 +241,27 @@ plot(resid(mod.lm4))
 # Pista: si has cambiado de variable respuesta, vuelve a hacer los gr�ficos bivariantes y los suavizados
 
 par(mfrow=c(2,4))
-for(i in 6:8){
+for(i in 5:6){
   plot(datos$countBC~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="countBC")
   with(datos,lines(lowess(countBC~datos[,i]),col=2))
 }
+## NO, vemos que las dos categorias (temp y humidity) siguen una relacion lineal respecto la variable countBC 
 
 ##-- 17. Para aquella o aquellas variables que lo creas necesario, ajusta un polinomio con todas las variables que tengas y
 ##-- vuelve a hacer la validacion
-mod.lm5 = lm(countBC~year+season+holiday+weather+poly(temp,2)+poly(humidity,2)+poly(windspeed,2)+hourCategory,datos)
+
+mod.lm5 = lm(countBC ~ year + season + holiday + weather + poly(temp,2) + poly(humidity,2) + hourCategory,datos)
 mod.lm5 = step(mod.lm5)
 summary(mod.lm5)
+## R-squared = 0.6364
+## residual standard error = 1.787
+## Vemos que hay una diferencia insignificante respecto al modelo lm3, hablamos de milesimas, por lo que no vemos que sea necesario utilizar las transformaciones polinomicas
 
 par(mfrow=c(2,2))
 plot(mod.lm5)
 plot(resid(mod.lm5))
 
-# COmparacion de modelos
+# Comparacion de modelos
 summary(mod.lm1)
 summary(mod.lm2)
 summary(mod.lm3)
@@ -260,22 +277,23 @@ summary(mod.lm5)
 # observaciones. Si, por ejemplo, quieres eliminar las observaciones 1, 2 y 5, entonces datos2 <- datos[-c(1,2,5),]
 # Modelo definitivo
 
-influenceIndexPlot(mod.lm5)
-# A eliminar: 2005, 6737
-cooksDistance = cooks.distance(mod.lm5)
-influencePlot(mod.lm5)
+influenceIndexPlot(mod.lm3)
+cooksDistance = cooks.distance(mod.lm3)
+## A eliminar: 2005, 6737
+influencePlot(mod.lm3)
 
-datos2 = datos[-c(2005,6737,7677,3338,620),] # eliminamos todos los mayores a 0.0026
-mod.lm6 = lm(countBC~year+season+holiday+weather+poly(temp,2)+poly(humidity,2)+poly(windspeed,2)+hourCategory,datos2)
-influenceIndexPlot(mod.lm6)
+datos2 = datos[-c(2005,6737),]
+mod.lm6 = lm(countBC ~ year + season + holiday + weather + temp + humidity + hourCategory,datos2)
 summary(mod.lm6)
-summary(mod.lm5)
+## R-squared: 0.6323
+## Residual standard error: 1.797
+## Hay una mejora casi insignificante respecto el modelo lm3, asi que nos quedamos con el anterior
 
 par(mfrow=c(2,2))
 plot(mod.lm6)
 ##-- 19. Opcional: haz todo lo que tu creas necesario para mejorar el modelo (si es que hay algo que lo pueda mejorar)
 
-mod.final = mod.lm6
+mod.final = mod.lm3
 library('effects')
 plot(allEffects(mod.final))
 
@@ -301,7 +319,6 @@ datosTest = read.table('p1a_test.csv', header = TRUE, sep = ';', dec = '.', stri
 
 ## Convertir a factores
 datosTest$year = factor(datosTest$year)
-#datosTest$hour = factor(datosTest$hour)
 datosTest$season = factor(datosTest$season)
 datosTest$holiday = factor(datosTest$holiday)
 datosTest$workingday = factor(datosTest$workingday)
@@ -313,6 +330,8 @@ datosTest$hour = NULL
 
 ## Eliminar variables
 datosTest$atemp = NULL
+datosTest$windspeed = NULL
+datosTest$workingday = NULL
 
 ############################################################
 # Calcular predicciones
@@ -328,7 +347,7 @@ nthroot2 <- function(x, n) {
 }
 
 prediccionesBC = predict(mod.final, datosTest)
-datosTest$predicciones = nthroot2(prediccionesBC, lamb)
+datosTest$predicciones = prediccionesBC^(1/lamb)
 
 ############################################################
 # Guardar fichero
@@ -337,4 +356,4 @@ datosTest$predicciones = nthroot2(prediccionesBC, lamb)
 # Pista: Usa la funcion write.table y sigue escrupulosamente las instrucciones del enunciado para generar este fichero
 # (quote = FALSE, sep = ";", row.names = FALSE, col.names = FALSE)
 
-write.table(datosTest[c('id','predicciones')], file='result.txt', quote = FALSE, sep = ";", row.names = FALSE, col.names = FALSE)
+write.table(datosTest[c('id','predicciones')], file='p1a.txt', quote = FALSE, sep = ";", row.names = FALSE, col.names = FALSE)
