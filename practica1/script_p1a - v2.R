@@ -26,6 +26,7 @@
 ##-- 1.Borra todos los objetos que tengas en memoria para que no te confundan en esta pr�ctica 
 ## Pista: instrucci�n rm o la escoba de la ventana superior derecha
 
+rm(list = ls())
 
 ############################################################
 # Lectura de datos y inspeccion
@@ -141,8 +142,8 @@ summary(mod.lm1)
 
 mod.lm2 = step(mod.lm1)
 summary(mod.lm2)
-## R-squared 0.6034
-## standard error 114.8
+## R-squared 0.6275
+## standard error 111.3
 ## Workingday y windspeed han sido eliminadas del modelo
 datos$workingday = NULL
 

@@ -1,0 +1,124 @@
+---
+title: "MBD - Estadística - Práctica 1a (ML)"
+author: Arturo Menchaca y Víctor Juez
+date: Noviember 22, 2020
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+```
+
+```{r}
+rm(list = ls())
+
+datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datos$id = NULL
+
+datos$year = factor(datos$year)
+datos$season = factor(datos$season)
+datos$holiday = factor(datos$holiday)
+datos$workingday = factor(datos$workingday)
+datos$weather = factor(datos$weather)
+```
+
+```{r}
+#Indice
+#------------------------
+#- Analisis de variables
+#  - Transformacion variable hora
+#  - Descriptiva variables numericas (vemos correlacion temp y atemp)
+#    - Analisis de temp y atemp (hacemos los modelos y elminamos el peor)
+#    - Analisis de linealidad de las variables
+#  - Variables categoricas (plots y resumen)
+#- Generacion de modelos
+#  - Modelo 1: Todas las variables (explicar resultado)
+#  - Modelo 2: Seleccion automatica de variables
+#    - Analisis de colinealidad (vif)
+#    - Validacion de las premisas
+#  - Transformacion de la variable resupesta
+#    - Modelo 4: Transformacion Logaritmica (explicar resultado)
+#    - Modelo 3: Transformacion BoxCox (imprimir solamente el modelo y explicar resultado, comparar con modelo anterior)
+#      - Validacion (comparacion modelo anterior lm2)
+#  - Modelo 5: Transformaciones polinomicas (imprimir y explicar solamente el resultado del modelo, vemos que no vale la pena)
+#- Observaciones influyentes (imprimir influenceIndexPlot(mod.lm3))
+#  - Modelo 6: Eliminar observaciones influyentes
+#- Modelo final: el modelo 3 plot(alleffects)
+#------------------------
+```
+# Análisis de variables
+
+El conjunto de datos consta de las siguientes variables:
+
+- id: identificador de la franja horaria (no guarda relación con el orden temporal)
+- year: año (2011 o 2012)
+- hour: hora del día (0 a 23)
+- season: 1 = invierno, 2 =primavera, 3 = verano, 4 = otoño
+- holiday: si el día era festivo
+- workingday: si el día era laborable (ni festivo ni fin de semana)
+- weather: cuatro categorías (1 a 4) que van de mejor a peor tiempo
+- temp: temperatura en grados celsius
+- atemp: sensación de temperatura en grados celsius
+- humidity: humedad relativa
+- windspeed: velocidad del viento (km/h)
+- count (sólo en el conjunto de entrenamiento): número total de alquileres en esa franja
+
+A continuación mostramos la descriptiva de los datos:
+
+```{r}
+summary(datos)
+```
+
+## Categorización de la variable hora
+
+Descriptiva de la variable respuesta en función de la variable hora:
+
+```{r}
+plot(count~hour, datos)
+```
+
+Decidimos agrupar la variable hora en los siguientes grupos:
+
+- Morning: de 0:00h a 6:00h
+- Moving: de 6:00h a 8:00h y de 16:00 a 19:00 
+- Worktime: de 8:00h a 16:00h
+- Night: de 19:00h a 23:00h
+
+A continuación la descriptiva de la variable hora categorizada:
+
+```{r}
+datos$hourCategory = cut(datos$hour, c(0,6,8,16,19,23), labels = c('morning', 'moving', 'worktime', 'moving', 'night'), include.lowest = TRUE)
+plot(count~hourCategory, datos)
+datos$hour = NULL
+```
+
+## Descriptiva de las variables numericas
+
+```{r}
+pairs(datos[, c(6:10)])
+```
+
+Como podemos observar en la descriptiva que mostramos a arriba, vemos que la variable temp y atemp estan muy relacionadas, así que vamos a analizar cual de las dos predice peor la respuesta para descartarla.
+
+### Analisis de la variable Temp:
+  ```{r}
+  lmTemp = lm(count ~ temp, datos)
+  summary(lmTemp)
+  ```
+
+### Analisis de la variable Atemp:
+  ```{r}
+  lmAtemp = lm(count ~ atemp, datos)
+  summary(lmAtemp)
+  ```
+
+Dados los resultados, eliminamos la variable Atemp ya que predice peor el resultado (PONER RESULTADOS)
+
+## Variables categoricas
+
+```{r}
+par(mfrow=c(2,3))
+for(i in c(1, 2, 3, 4, 5, 10)){
+  boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
+}
+```
