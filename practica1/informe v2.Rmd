@@ -1,0 +1,320 @@
+---
+title: "MBD - Estadística - Práctica 1a (ML)"
+author: Arturo Menchaca y Víctor Juez
+date: Noviember 22, 2020
+geometry: margin=2cm
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+```
+
+```{r}
+rm(list = ls())
+
+datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datos$id = NULL
+
+datos$year = factor(datos$year)
+datos$season = factor(datos$season)
+datos$holiday = factor(datos$holiday)
+datos$workingday = factor(datos$workingday)
+datos$weather = factor(datos$weather)
+```
+
+```{r}
+#Indice
+#------------------------
+#- Analisis de variables
+#  - Transformacion variable hora
+#  - Descriptiva variables numericas (vemos correlacion temp y atemp)
+#    - Analisis de temp y atemp (hacemos los modelos y elminamos el peor)
+#    - Analisis de linealidad de las variables
+#  - Variables categoricas (plots y resumen)
+#- Generacion de modelos
+#  - Modelo 1: Todas las variables (explicar resultado)
+#  - Modelo 2: Seleccion automatica de variables
+#    - Analisis de colinealidad (vif)
+#    - Validacion de las premisas
+#  - Transformacion de la variable resupesta
+#    - Modelo 4: Transformacion Logaritmica (explicar resultado)
+#    - Modelo 3: Transformacion BoxCox (imprimir solamente el modelo y explicar resultado, comparar con modelo anterior)
+#      - Validacion (comparacion modelo anterior lm2)
+#  - Modelo 5: Transformaciones polinomicas (imprimir y explicar solamente el resultado del modelo, vemos que no vale la pena)
+#- Observaciones influyentes (imprimir influenceIndexPlot(mod.lm3))
+#  - Modelo 6: Eliminar observaciones influyentes
+#- Modelo final: el modelo 3 plot(alleffects)
+#------------------------
+```
+# Análisis de variables
+
+El conjunto de datos consta de las siguientes variables:
+
+- id: identificador de la franja horaria (no guarda relación con el orden temporal)
+- year: año (2011 o 2012)
+- hour: hora del día (0 a 23)
+- season: 1 = invierno, 2 =primavera, 3 = verano, 4 = otoño
+- holiday: si el día era festivo
+- workingday: si el día era laborable (ni festivo ni fin de semana)
+- weather: cuatro categorías (1 a 4) que van de mejor a peor tiempo
+- temp: temperatura en grados celsius
+- atemp: sensación de temperatura en grados celsius
+- humidity: humedad relativa
+- windspeed: velocidad del viento (km/h)
+- count (sólo en el conjunto de entrenamiento): número total de alquileres en esa franja
+
+&nbsp;
+
+A continuación mostramos la descriptiva de los datos:
+
+```{r}
+summary(datos)
+```
+
+\newpage
+
+## Categorización de la variable hora
+
+Descriptiva de la variable respuesta en función de la variable hora:
+
+```{r}
+plot(count~hour, datos)
+```
+
+Decidimos agrupar la variable hora en los siguientes grupos:
+
+- Morning: de 0:00h a 6:00h
+- Moving: de 7:00h a 8:00h y de 17:00 a 19:00 
+- Worktime: de 9:00h a 16:00h
+- Night: de 20:00h a 23:00h
+
+A continuación la descriptiva de la variable hora categorizada:
+
+```{r}
+datos$hourCategory = cut(datos$hour, c(0,6,8,16,19,23), labels = c('morning', 'moving', 'worktime', 'moving', 'night'), include.lowest = TRUE)
+plot(count~hourCategory, datos)
+datos$hour = NULL
+```
+
+\newpage
+
+## Descriptiva de las variables numericas
+
+```{r}
+pairs(datos[, c(6:10)])
+```
+
+Como podemos observar en la descriptiva que mostramos a arriba, vemos que la variable temp y atemp estan muy relacionadas, así que vamos a analizar cual de las dos predice peor la respuesta para descartarla.
+
+### Analisis de la variable Temp:
+```{r}
+lmTemp = lm(count ~ temp, datos)
+summary(lmTemp)
+```
+
+### Analisis de la variable Atemp:
+```{r}
+lmAtemp = lm(count ~ atemp, datos)
+summary(lmAtemp)
+```
+
+Dados los resultados, eliminamos la variable Atemp ya que predice peor el resultado:
+
+- Temp R-cuadrado: 0.1578
+
+- ATemp R-cuadrado: 0.1537
+
+```{r}
+datos$atemp = NULL
+```
+
+&nbsp;
+
+## Variables categoricas
+
+```{r}
+par(mfrow=c(2,3))
+for(i in c(1, 2, 3, 4, 5, 10)){
+  boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
+}
+```
+
+A simple vista holiday y workingday son las variables menos representativas ya que poseen boxcoxs muy similares para las distintas categorías.
+
+\newpage
+
+# Generación del modelo
+
+## Modelo 1: Todas las variables
+
+Como modelo inicial partimos de todas las variables de las que disponemos, obteniendo el siguiente modelo:
+
+```{r}
+mod.lm1 = lm(count~., datos)
+summary(mod.lm1)
+```
+
+Vemos que las variables workingday y windspeed poseen un significancia muy baja para el modelo, aun asi no lo podemos asegurar.
+
+## Modelo 2: Selección automática de variables
+
+Para este modelo realizamos una seleccion automática de las variables usando la funcion `step`. 
+
+```{r}
+mod.lm2 = step(mod.lm1)
+```
+
+Como podemos observar, la variable workingday ha sido eliminada, mientras que windspeed se ha mantenido. Viendo el modelo resultante obtenemos:
+
+```{r}
+datos$workingday = NULL
+summary(mod.lm2)
+```
+
+Aqui podemos ver que este modelo presenta el mismo R-cuadrado y error estándar, pero al trabajar con menos variables nos quedamos con este modelo.
+
+### Análisis de colinealidad (vif)
+
+Antes de seguir mejorando el modelo, revisamos si existen algunas variables muy dependientes del resto, para esto usamos la funcion `vif` de la librería `car`:
+
+```{r}
+library(car)
+vif(mod.lm2)
+```
+
+Como podemos observar, no existe ninguna variable lo suficientemente dependiente para eliminarla, season y temp son las que poseen un vif mas alto pero no alcanzan el umbral de 5 como para considerar eliminarlas.
+
+### Validación de las premisas
+
+Para validar el modelo, analizamos las premisas de linealidad, homoscedasticidad, normalidad de residuos e independencia.
+
+```{r}
+par(mfrow=c(2,2))
+plot(mod.lm2)
+```
+
+```{r out.width="50%"}
+par(mfrow=c(1,1))
+plot(resid(mod.lm2))
+```
+
+Dado los gráficos anteriores poder llegar a las siguientes conclusiones acerca de las premisas:
+
+- Linealidad: Se observa una curvatura de los puntos donde no se mantiene la uniformidad a lo largo de los valores predichos, por lo que asumimos que no cumple esta premisa.
+
+- Homocedasticidad: Claramente se ve una forma de cono donde no se mantiene la distribucion de los puntos a lo largo de los valores predichos, por lo que tampoco se cumple esta premisa.
+
+- Normalidad: Los puntos se distribuyen bastante uniforme a lo largo de la recta de normalidad, pero hay cierto grado de desviación en los extremos que se podría mejorar.
+
+- Independencia: Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparecen, sin ningún patrón que indique dependencia de las muestras.
+
+## Transformación de la variable respuesta
+
+Para tratar de mejorar estos valores de las premisas probamos aplicando distintas transformaciones a la respuesta para medir si ofrecen mejores resultados:
+
+### Modelo 3: Transformación BoxCox
+
+Aplicamos la transformación de BoxCox a la variable respuesta, obteniendo el siguiente modelo:
+
+```{r include=FALSE}
+bc <- boxCox(mod.lm2)
+lamb = bc$x[which.max(bc$y)]
+datos$countBC <- datos$count^lamb
+```
+
+```{r}
+mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
+summary(mod.lm3)
+```
+
+### Modelo 4: Transformación logarítmica
+
+Aplicamos una transformación logarítmica a la variable respuesta, obteniendo el siguiente modelo:
+
+```{r}
+datos$countLog <- log(datos$count)
+mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
+summary(mod.lm4)
+```
+
+Como podemos ver, en ambas transformaciones se mejora en gran medida el modelo obtenido, teniendo un valor R-cuadrado superior a 0.7. En el caso de la transformación BoxCox con un medida superior de 0.7418, por lo que nos quedamos con esta transformación de BoxCox para nuestro modelo.
+
+#### Validación de las premisas
+
+Validamos una vez mas el modelo, analizando las premisas:
+
+```{r}
+par(mfrow=c(2, 2))
+plot(mod.lm3)
+```
+
+```{r out.width="50%"}
+par(mfrow=c(1, 1))
+plot(resid(mod.lm3))
+```
+
+En este nuevo modelo podemos ver las mejoras sobre las premisas:
+
+- Linealidad: Aunque aun mantiene una leve curvatura en los puntos, se observa una gran linealidad sobre la distribución a lo largo de los valores predichos, por lo que asumimos que se cumple.
+
+- Homocedasticidad: Los puntos mantienen una mejor distribución, eliminándose en gran medida la forma de cono, por lo que igualmente asumimos que se cumple.
+
+- Normalidad: Los puntos se distribuyen uniforme a todo lo largo, solo con una pequeña desviación pero muy poca.
+
+- Independencia: Se cumple, al igual que en el modelo anterior.
+
+## Modelo 5: Transformaciones polinómicas
+
+Con el objetivo de mejorar las premisas, aplicamos transformaciones a las variables para ver si mejoran los resultados. Para esto analizamos la relación entre las variables y la respuesta:
+
+```{r}
+par(mfrow = c(2, 3))
+for (i in 5:7) {
+  plot(datos$countBC ~ datos[,i], main = names(datos)[i], xlab = names(datos)[i], ylab="countBC")
+  with(datos, lines(lowess(countBC ~ datos[,i]), col = 2))
+}
+```
+
+Visto que en las variables se puede observar cierta desviación, aplicamos una transformación cuadrática tratando de linealizar mas esta relación:
+
+```{r}
+mod.lm5 = lm(countBC ~ year + season + holiday + weather + poly(temp, 2) + poly(humidity, 2) + poly(windspeed, 2) + hourCategory, datos)
+summary(mod.lm5)
+```
+
+Podemos ver que el modelo mejora con respecto al anterior, pero es despreciable teniendo en cuenta la complejidad que agrega transformar las variables, por lo que nos mantenemos con el modelo anterior.
+
+# Observaciones influyentes
+
+Otro punto a tener en cuenta, son las observaciones influeyentes, estas las podemos obtener usando la función `influenceIndexPlot` y eliminarlas a la hora de generar el modelo:
+
+```{r}
+influenceIndexPlot(mod.lm3)
+```
+
+## Modelo 6: Eliminar observaciones influyentes
+
+Observamos que los puntos 2005 y 6737 presentan una gran influencia y los quitamos a ver si mejora la estimación:
+
+```{r}
+datos2 = datos[-c(2005,6737),]
+mod.lm6 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos2)
+summary(mod.lm6)
+```
+
+Al igual que antes, este modelo presenta una mejora, pero muy pequeña en comparación a la complejidad que agrega al modelo, por lo que no la tendremos en cuenta.
+
+# Modelo Final: Modelo 3 BoxCox
+
+Como modelo final nos quedamos con el modelo número 3, el cual ofrece un valor alto de R-cuadrado y mantiene la simplicidad del modelo.
+
+```{r}
+mod.final = mod.lm3
+summary(mod.final)
+```
+
+```{r}
+library('effects')
+plot(allEffects(mod.final))
+```

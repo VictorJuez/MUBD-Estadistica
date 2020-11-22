@@ -67,14 +67,18 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\setcounter{secnumdepth}{5}
 
 \title{MBD - Estadística - Práctica 1a (ML)}
 \author{Arturo Menchaca y Víctor Juez}
-\date{Noviember 22, 2020}
+\date{Noviembre 22, 2020}
 
 \begin{document}
 \maketitle
+
+\newpage
+\tableofcontents
+\newpage
 
 \hypertarget{conjunto-de-datos}{%
 \section{Conjunto de datos}\label{conjunto-de-datos}}
@@ -137,8 +141,8 @@ A continuación mostramos la descriptiva de los datos:
 ##  Max.   :977.0
 \end{verbatim}
 
-\hypertarget{analisis-de-las-variables}{%
-\section{Analisis de las variables}\label{analisis-de-las-variables}}
+\hypertarget{anuxe1lisis-de-las-variables}{%
+\section{Análisis de las variables}\label{anuxe1lisis-de-las-variables}}
 
 \hypertarget{categorizaciuxf3n-de-la-variable-hora}{%
 \subsection{Categorización de la variable
@@ -190,8 +194,9 @@ R-squared & 0.1578 & 0.1537\tabularnewline
 \texttt{Atemp} describe mejor el resultado (R-squared mayor), eliminamos
 la variable \texttt{Temp}.
 
-\hypertarget{variables-categoricas}{%
-\subsection{Variables categoricas}\label{variables-categoricas}}
+\hypertarget{descriptiva-de-las-variables-categoricas}{%
+\subsection{Descriptiva de las variables
+categoricas}\label{descriptiva-de-las-variables-categoricas}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-8-1.pdf}
 
@@ -200,12 +205,12 @@ más en la respuesta que otras. Las que tinen boxplots muy similares
 entre categorías menos representativas van a ser, como es el caso de
 \texttt{Holiday} y \texttt{Working\ day}.
 
-\hypertarget{generaciuxf3n-de-modelos}{%
-\section{Generación de modelos}\label{generaciuxf3n-de-modelos}}
+\hypertarget{generaciuxf3n-del-modelo}{%
+\section{Generación del modelo}\label{generaciuxf3n-del-modelo}}
 
-\hypertarget{modelo-1-utilizando-todas-las-variables}{%
-\subsection{Modelo 1: Utilizando todas las
-variables}\label{modelo-1-utilizando-todas-las-variables}}
+\hypertarget{modelo-1---utilizando-todas-las-variables}{%
+\subsection{Modelo 1 - Utilizando todas las
+variables}\label{modelo-1---utilizando-todas-las-variables}}
 
 \begin{itemize}
 \tightlist
@@ -225,9 +230,9 @@ p-value & \textless{} 2.2e-16\tabularnewline
 \bottomrule
 \end{longtable}
 
-\hypertarget{modelo-2-selecciuxf3n-automuxe1tica-de-variables}{%
-\subsection{Modelo 2: Selección automática de
-variables}\label{modelo-2-selecciuxf3n-automuxe1tica-de-variables}}
+\hypertarget{modelo-2---selecciuxf3n-automuxe1tica-de-variables}{%
+\subsection{Modelo 2 - Selección automática de
+variables}\label{modelo-2---selecciuxf3n-automuxe1tica-de-variables}}
 
 Hemos utilizado el método matemático AIC (Akaike Information Criterion)
 para determinar qué conjunto de variables es el óptimo para explicar el
@@ -254,13 +259,6 @@ Variable a eliminar & AIC eliminando la variable\tabularnewline
 
 Eliminamos la variable \texttt{workingday} y generamos otro modelo. A
 continuación el resultado.
-
-\begin{itemize}
-\tightlist
-\item
-  Variables utilizadas:
-  \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
-\end{itemize}
 
 \begin{longtable}[]{@{}ll@{}}
 \toprule
@@ -313,6 +311,7 @@ variables y que no tendríamos que eliminar ninguna.
 premisas}\label{validaciuxf3n-de-las-premisas}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-11-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-11-2.pdf}
 
 \begin{itemize}
 \tightlist
@@ -324,21 +323,15 @@ premisas}\label{validaciuxf3n-de-las-premisas}}
 \item
   \textbf{Normalidad de los residuos}: Desviación de la normal tanto en
   valores pequeños y granes, no se cumple.
-\end{itemize}
-
-\includegraphics{informe_files/figure-latex/unnamed-chunk-12-1.pdf}
-
-\begin{itemize}
-\tightlist
 \item
   \textbf{Independencia}: Se cumple, vemos la misma varianza de los
   residuos a lo largo del orden en que aparacene en el conjunto de
   datos.
 \end{itemize}
 
-\hypertarget{transformaciuxf3n-de-la-variable-resupesta}{%
-\subsection{Transformación de la variable
-resupesta}\label{transformaciuxf3n-de-la-variable-resupesta}}
+\hypertarget{modelo-3---transformaciuxf3n-de-la-variable-resupesta}{%
+\subsection{Modelo 3 - Transformación de la variable
+resupesta}\label{modelo-3---transformaciuxf3n-de-la-variable-resupesta}}
 
 Hemos generado dos nuevos modelos utilizando la transformación
 logarítmica y la de BoxCox de la variable respuesta. A continuación los
@@ -364,9 +357,8 @@ Residual standard error & 0.7899 & 0.5919\tabularnewline
   da un mejor resultado.
 \end{itemize}
 
-\hypertarget{modelo-final---transformaciuxf3n-boxcox}{%
-\subsection{Modelo final - Transformación
-BoxCox}\label{modelo-final---transformaciuxf3n-boxcox}}
+\hypertarget{modelo-final---modelo-3}{%
+\section{Modelo final - Modelo 3}\label{modelo-final---modelo-3}}
 
 \begin{itemize}
 \item
@@ -395,15 +387,13 @@ BoxCox}\label{modelo-final---transformaciuxf3n-boxcox}}
   p-value & \textless{} 2.2e-16 &\tabularnewline
   \bottomrule
   \end{longtable}
-\item
-  Vemos un resultado prácticamente idéntico al del Modelo 1 pero
-  utilizando una variable menos.
 \end{itemize}
 
 \hypertarget{validaciuxf3n-del-modelo}{%
-\subsubsection{Validación del modelo}\label{validaciuxf3n-del-modelo}}
+\subsection{Validación del modelo}\label{validaciuxf3n-del-modelo}}
 
-\includegraphics{informe_files/figure-latex/unnamed-chunk-14-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-13-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-13-2.pdf}
 
 \begin{itemize}
 \tightlist
@@ -417,22 +407,17 @@ BoxCox}\label{modelo-final---transformaciuxf3n-boxcox}}
   \textbf{Normalidad de los residuos}: Sigue desviándose en valores
   altos pero podríamos considerar que ahora se cumple, ha mejorado
   respecto al Modelo 2.
-\end{itemize}
-
-\includegraphics{informe_files/figure-latex/unnamed-chunk-15-1.pdf}
-
-\begin{itemize}
-\tightlist
 \item
   \textbf{Independencia}: Se cumple, vemos la misma varianza de los
   residuos a lo largo del orden en que aparacene en el conjunto de
   datos.
 \end{itemize}
 
-\hypertarget{descriptiva-del-modelo}{%
-\subsubsection{Descriptiva del modelo}\label{descriptiva-del-modelo}}
+\hypertarget{efecto-de-las-caracteruxedsticas-sobre-la-variable-respuesta}{%
+\subsection{Efecto de las características sobre la variable
+respuesta}\label{efecto-de-las-caracteruxedsticas-sobre-la-variable-respuesta}}
 
-\includegraphics{informe_files/figure-latex/unnamed-chunk-16-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-14-1.pdf}
 
 \hypertarget{modelos-descartados}{%
 \section{Modelos descartados}\label{modelos-descartados}}
@@ -446,7 +431,7 @@ y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
 
 \begin{itemize}
 \item
-  Modelo de partida: Modelo 3
+  Modelo de referencia: Modelo 3
 \item
   Variables utilizadas:
   \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
@@ -482,13 +467,18 @@ y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
   polinómica
 \end{itemize}
 
+\newpage
+
+\hypertarget{anexo}{%
+\section{Anexo}\label{anexo}}
+
 \hypertarget{modelo-6-eliminar-observaciones-influyentes}{%
-\section{Modelo 6: Eliminar observaciones
+\subsection{Modelo 6: Eliminar observaciones
 influyentes}\label{modelo-6-eliminar-observaciones-influyentes}}
 
 Analizamos las observaciones influyentes del Modelo 3:
 
-\includegraphics{informe_files/figure-latex/unnamed-chunk-17-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-15-1.pdf}
 
 Vemos que las observaciones 2005 y 6737 son las que tienen una distancia
 de Cook mayor, por lo que son las más influyentes. A continuación sus
@@ -508,7 +498,7 @@ Eliminamos estas dos observaciones y generamos un nuevo modelo.
 
 \begin{itemize}
 \item
-  Modelo de partida: Modelo 3
+  Modelo de referencia: Modelo 3
 \item
   Variables utilizadas:
   \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}

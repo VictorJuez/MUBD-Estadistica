@@ -1,9 +1,16 @@
 ---
 title: "MBD - Estadística - Práctica 1a (ML)"
 author: Arturo Menchaca y Víctor Juez
-date: Noviember 22, 2020
-output: pdf_document
+date: Noviembre 22, 2020
+output: 
+  pdf_document:
+    fig_caption: true
+    number_sections: true
 ---
+
+\newpage
+\tableofcontents
+\newpage
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
@@ -69,7 +76,7 @@ A continuación mostramos la descriptiva de los datos:
 summary(datos)
 ```
 
-# Analisis de las variables
+# Análisis de las variables
 ## Categorización de la variable hora
 
 Descriptiva de la variable respuesta en función de la variable hora:
@@ -111,7 +118,7 @@ datos$atemp = NULL
 
 `Atemp` describe mejor el resultado (R-squared mayor), eliminamos la variable `Temp`.
 
-## Variables categoricas
+## Descriptiva de las variables categoricas
 
 ```{r}
 par(mfrow=c(2,3))
@@ -122,8 +129,8 @@ for(i in c(1, 2, 3, 4, 5, 10)){
 
 Vemos que a primera vista parece que algunas categorias van a influir más en la respuesta que otras. Las que tinen boxplots muy similares entre categorías menos representativas van a ser, como es el caso de `Holiday` y `Working day`.
 
-# Generación de modelos
-## Modelo 1: Utilizando todas las variables
+# Generación del modelo
+## Modelo 1 - Utilizando todas las variables
 
 ```{r}
 mod.lm1 = lm(count~.,datos)
@@ -137,7 +144,7 @@ mod.lm1 = lm(count~.,datos)
 |Multiple R-squared | 0.6276 |
 |p-value | < 2.2e-16 |
 
-## Modelo 2: Selección automática de variables
+## Modelo 2 - Selección automática de variables
 
 Hemos utilizado el método matemático AIC (Akaike Information Criterion) para determinar qué conjunto de variables es el óptimo para explicar el modelo y cualos sería conveniente eliminar. Recordemos que cuanto menor es el AIC mejor.
 
@@ -155,8 +162,6 @@ Hemos utilizado el método matemático AIC (Akaike Information Criterion) para d
 |`hourCategory` | 77039|
 
 Eliminamos la variable `workingday` y generamos otro modelo. A continuación el resultado.
-
-- Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
 
 | Propiedad | Valores |
 |---|---|
@@ -191,19 +196,15 @@ mod.lm2 = step(mod.lm1)
 ```{r}
 par(mfrow=c(2,2))
 plot(mod.lm2)
+plot(resid(mod.lm2))
 ```
 
 - **Homocedasticidad**: Vemos una forma de cono clara, no se cumple.
 - **Linealidad**: Hay curvatura, tampoco se cumple.
 - **Normalidad de los residuos**: Desviación de la normal tanto en valores pequeños y granes, no se cumple.
-
-```{r}
-plot(resid(mod.lm2))
-```
-
 - **Independencia**: Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparacene en el conjunto de datos.
 
-## Transformación de la variable resupesta
+## Modelo 3 - Transformación de la variable resupesta
 
 ```{r results = FALSE, fig.show='hide', messages = FALSE}
 library(car)
@@ -222,7 +223,7 @@ Hemos generado dos nuevos modelos utilizando la transformación logarítmica y l
 - En general vemos una mejora sustancial utilizando una transformación en la variable respuesta.
 - De las dos transformaciones, nos quedamos con la de BoxCox ya que nos da un mejor resultado.
 
-## Modelo final - Transformación BoxCox
+# Modelo final - Modelo 3
 
 - Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
 - Transformaciones:
@@ -236,27 +237,21 @@ Hemos generado dos nuevos modelos utilizando la transformación logarítmica y l
   | Multiple R-squared | 0.7418 |
   | p-value | < 2.2e-16 |
 
-- Vemos un resultado prácticamente idéntico al del Modelo 1 pero utilizando una variable menos.
-
-### Validación del modelo
+## Validación del modelo
 
 ```{r}
 mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
 par(mfrow=c(2,2))
 plot(mod.lm3)
+plot(resid(mod.lm3))
 ```
 
 - **Homocedasticidad**: Se cumple, sigue habiendo más dispersión en el centro que en los extremos, pero ya no tenemos la forma de cono que teníamos en el Modelo 2.
 - **Linealidad**: Se cumple, hay curvatura pero muy leve.
 - **Normalidad de los residuos**: Sigue desviándose en valores altos pero podríamos considerar que ahora se cumple, ha mejorado respecto al Modelo 2.
-
-```{r}
-plot(resid(mod.lm3))
-```
-
 - **Independencia**: Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparacene en el conjunto de datos.
 
-### Descriptiva del modelo
+## Efecto de las características sobre la variable respuesta
 
 ```{r messages = FALSE, fig.width=10, fig.height=10}
 library('effects')
@@ -270,7 +265,7 @@ plot(allEffects(mod.lm3))
 ## Modelo 5: Transformación polinómica
 Hemos realizado una transformación polinómica a las variables numéricas y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
 
-- Modelo de partida: Modelo 3
+- Modelo de referencia: Modelo 3
 - Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
 - Transformaciones:
   - BoxCox en la variable respuesta
@@ -286,7 +281,9 @@ Hemos realizado una transformación polinómica a las variables numéricas y gen
 
 -  Vemos que hay una diferencia insignificante respecto al Modelo 3, por lo que no vemos que sea necesario utilizar la transformación polinómica
 
-# Modelo 6: Eliminar observaciones influyentes
+\newpage
+# Anexo
+## Modelo 6: Eliminar observaciones influyentes
 Analizamos las observaciones influyentes del Modelo 3:
 
 ```{r}
@@ -302,7 +299,7 @@ Vemos que las observaciones 2005 y 6737 son las que tienen una distancia de Cook
 
 Eliminamos estas dos observaciones y generamos un nuevo modelo.
 
-- Modelo de partida: Modelo 3
+- Modelo de referencia: Modelo 3
 - Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
 - Transformaciones:
   - Eliminación de las observaciones influyentes 2005 y 6737
