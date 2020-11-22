@@ -36,8 +36,8 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
 \hypersetup{
-  pdftitle={MBD - Estadística - Práctica 1a (ML)},
-  pdfauthor={Arturo Menchaca y Víctor Juez},
+  pdftitle={Práctica 1a (ML)},
+  pdfauthor={Arturo Menchaca; Víctor Juez},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
@@ -69,8 +69,16 @@
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 \setcounter{secnumdepth}{5}
 
-\title{MBD - Estadística - Práctica 1a (ML)}
-\author{Arturo Menchaca y Víctor Juez}
+\title{Práctica 1a (ML)}
+\usepackage{etoolbox}
+\makeatletter
+\providecommand{\subtitle}[1]{% add subtitle to \maketitle
+  \apptocmd{\@title}{\par {\large #1 \par}}{}{}
+}
+\makeatother
+\subtitle{Estadística\\
+Máster en Big Data}
+\author{Arturo Menchaca \and Víctor Juez}
 \date{Noviembre 22, 2020}
 
 \begin{document}
@@ -176,8 +184,8 @@ numéricas}\label{descriptiva-de-las-variables-numuxe9ricas}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-6-1.pdf}
 
-Como podemos observar en la descriptiva que mostramos a arriba, vemos
-que la variable temp y atemp estan muy relacionadas. Generamos un modelo
+Como podemos observar en la descriptiva que mostramos arriba, vemos que
+la variable temp y atemp están muy relacionadas. Generamos un modelo
 utilizando cada una de las variables por separado para ver cual de las
 dos predice peor el resultado y eliminarla.
 
@@ -200,7 +208,7 @@ categóricas}\label{descriptiva-de-las-variables-categuxf3ricas}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-8-1.pdf}
 
-Vemos que a primera vista parece que algunas categorias van a influir
+Vemos que a primera vista parece que algunas categorías van a influir
 más en la respuesta que otras. Las que tinen boxplots muy similares
 entre categorías menos representativas van a ser, como es el caso de
 \texttt{holiday} y \texttt{workingday}.
@@ -238,7 +246,7 @@ variables}\label{modelo-2---selecciuxf3n-automuxe1tica-de-variables}}
 
 Hemos utilizado el método matemático AIC (Akaike Information Criterion)
 para determinar qué conjunto de variables es el óptimo para explicar el
-modelo y cualos sería conveniente eliminar. Recordemos que cuanto menor
+modelo y cuales sería conveniente eliminar. Recordemos que cuanto menor
 es el AIC mejor.
 
 \begin{longtable}[]{@{}ll@{}}
@@ -313,22 +321,24 @@ variables y que no tendríamos que eliminar ninguna.
 premisas}\label{validaciuxf3n-de-las-premisas}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-11-1.pdf}
-\includegraphics{informe_files/figure-latex/unnamed-chunk-11-2.pdf}
 
 \begin{itemize}
 \tightlist
 \item
-  \textbf{Homocedasticidad}: No se cumple, vemos que la dispersión de
-  los residuos no es constante, forman una forma de embudo clara.
+  \textbf{Homocedasticidad}: Vemos en el gráfico Residuals vs Fitted que
+  no se cumple, la dispersión de los residuos no es constante y forman
+  una efecto de embudo clara.
 \item
-  \textbf{Linealidad}: Hay curvatura, tampoco se cumple.
+  \textbf{Linealidad}: También en el gráfico de Residuals vs Fitted
+  vemos que hay curvatura, tampoco se cumple.
 \item
-  \textbf{Normalidad de los residuos}: Desviación de la distribución
-  normal tanto en valores pequeños como en grandes, no se cumple.
+  \textbf{Normalidad de los residuos}: En el gráfico de Normal Q-Q vemos
+  que hay desviación respecto la distribución normal tanto en valores
+  pequeños como en grandes, por lo que no se cumple.
 \item
-  \textbf{Independencia}: Se cumple, vemos que la dispersión de los
-  residuos a lo largo del orden en que aparecen en el conjunto de datos
-  es constante.
+  \textbf{Independencia}: Vemos en el gráfico Residuals vs Index que se
+  cumple, la dispersión de los residuos a lo largo del orden en que
+  aparecen en el conjunto de datos es constante.
 \end{itemize}
 
 \hypertarget{modelo-3---transformaciuxf3n-de-la-variable-resupesta}{%
@@ -431,7 +441,6 @@ Residual standard error & 0.7899 & 0.5919\tabularnewline
 \subsection{Validación del modelo}\label{validaciuxf3n-del-modelo}}
 
 \includegraphics{informe_files/figure-latex/unnamed-chunk-14-1.pdf}
-\includegraphics{informe_files/figure-latex/unnamed-chunk-14-2.pdf}
 
 \begin{itemize}
 \tightlist
@@ -457,9 +466,9 @@ respuesta}\label{efecto-de-las-caracteruxedsticas-sobre-la-variable-respuesta}}
 
 \newpage
 
-\hypertarget{anexos---modelos-descartados}{%
-\section{Anexos - Modelos
-descartados}\label{anexos---modelos-descartados}}
+\hypertarget{anexo---modelos-descartados}{%
+\section{Anexo - Modelos
+descartados}\label{anexo---modelos-descartados}}
 
 \hypertarget{modelo-4-transformaciuxf3n-polinuxf3mica}{%
 \subsection{Modelo 4: Transformación

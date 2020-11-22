@@ -33,7 +33,7 @@ rm(list = ls())
 ############################################################
 ##-- 2.Lee los datos p1a_train.csv
 ## Pista: fija el directorio donde tienes los datos y leelos con la instruccion read.table
-datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datos = read.table('../p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
 
 ##-- 3. Visualiza los datos para asegurarte que los has leido correctamente. Haz una descriptiva y elimina la variable id de tus datos por comodidad (no la utilizaras)
 ##-- Pista: para describir tus datos, usa la instrucci�n summary. Para eliminar la variable asigna el valor NULL a toda la variable
@@ -310,7 +310,7 @@ abline(0,1,col=2,lwd=2)
 #
 ############################################################
 ##-- 20. Lee los datos test (p1a_test.csv) con la instruccion read.table
-datosTest = read.table('p1a_test.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datosTest = read.table('../p1a_test.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
 
 ############################################################
 # Transformaciones en variables

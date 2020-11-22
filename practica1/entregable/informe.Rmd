@@ -1,6 +1,11 @@
 ---
-title: "MBD - Estadística - Práctica 1a (ML)"
-author: Arturo Menchaca y Víctor Juez
+title: "Práctica 1a (ML)"
+subtitle: |
+  | Estadística
+  | Máster en Big Data
+author: 
+  - Arturo Menchaca
+  - Víctor Juez
 date: Noviembre 22, 2020
 output: 
   pdf_document:
@@ -106,7 +111,7 @@ datos$hour = NULL
 pairs(datos[, c(6:10)])
 ```
 
-Como podemos observar en la descriptiva que mostramos a arriba, vemos que la variable temp y atemp estan muy relacionadas. Generamos un modelo utilizando cada una de las variables por separado para ver cual de las dos predice peor el resultado y eliminarla.
+Como podemos observar en la descriptiva que mostramos arriba, vemos que la variable temp y atemp están muy relacionadas. Generamos un modelo utilizando cada una de las variables por separado para ver cual de las dos predice peor el resultado y eliminarla.
 
 ```{r}
 datos$atemp = NULL
@@ -127,7 +132,7 @@ for(i in c(1, 2, 3, 4, 5, 10)){
 }
 ```
 
-Vemos que a primera vista parece que algunas categorias van a influir más en la respuesta que otras. Las que tinen boxplots muy similares entre categorías menos representativas van a ser, como es el caso de `holiday` y `workingday`.
+Vemos que a primera vista parece que algunas categorías van a influir más en la respuesta que otras. Las que tinen boxplots muy similares entre categorías menos representativas van a ser, como es el caso de `holiday` y `workingday`.
 
 # Generación del modelo
 ## Modelo 1 - Utilizando todas las variables
@@ -146,7 +151,7 @@ mod.lm1 = lm(count~.,datos)
 
 ## Modelo 2 - Selección automática de variables
 
-Hemos utilizado el método matemático AIC (Akaike Information Criterion) para determinar qué conjunto de variables es el óptimo para explicar el modelo y cualos sería conveniente eliminar. Recordemos que cuanto menor es el AIC mejor.
+Hemos utilizado el método matemático AIC (Akaike Information Criterion) para determinar qué conjunto de variables es el óptimo para explicar el modelo y cuales sería conveniente eliminar. Recordemos que cuanto menor es el AIC mejor.
 
 ```{r results = FALSE}
 mod.lm2 = step(mod.lm1)
@@ -194,16 +199,16 @@ Podemos observar que el indicador VIF de todas las variables se mantiene por deb
 
 ### Validación de las premisas
 
-```{r}
-par(mfrow=c(2,2))
+```{r fig.width=8, fig.height=7}
+par(mfrow=c(3,2))
 plot(mod.lm2)
-plot(resid(mod.lm2))
+plot(resid(mod.lm2), font.main = 1, main = 'Residuals vs Index', ylab = 'Residuals')
 ```
 
-- **Homocedasticidad**: No se cumple, vemos que la dispersión de los residuos no es constante, forman una forma de embudo clara.
-- **Linealidad**: Hay curvatura, tampoco se cumple.
-- **Normalidad de los residuos**: Desviación de la distribución normal tanto en valores pequeños como en grandes, no se cumple.
-- **Independencia**: Se cumple, vemos que la dispersión de los residuos a lo largo del orden en que aparecen en el conjunto de datos es constante.
+- **Homocedasticidad**: Vemos en el gráfico Residuals vs Fitted que no se cumple, la dispersión de los residuos no es constante y forman una efecto de embudo clara.
+- **Linealidad**: También en el gráfico de Residuals vs Fitted vemos que hay curvatura, tampoco se cumple.
+- **Normalidad de los residuos**: En el gráfico de Normal Q-Q vemos que hay desviación respecto la distribución normal tanto en valores pequeños como en grandes, por lo que no se cumple.
+- **Independencia**: Vemos en el gráfico Residuals vs Index que se cumple, la dispersión de los residuos a lo largo del orden en que aparecen en el conjunto de datos es constante.
 
 ## Modelo 3 - Transformación de la variable resupesta
 
@@ -247,11 +252,11 @@ summary(mod.lm3)
 
 ## Validación del modelo
 
-```{r}
+```{r fig.width=8, fig.height=7}
 mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
-par(mfrow=c(2,2))
+par(mfrow=c(3,2))
 plot(mod.lm3)
-plot(resid(mod.lm3))
+plot(resid(mod.lm3), font.main = 1, main = 'Residuals vs Index', ylab = 'Residuals')
 ```
 
 - **Homocedasticidad**: Se cumple, sigue habiendo más dispersión en el centro y en valores más altos que en pequeños, pero ya no tenemos la forma de embudo tan destacada que teníamos en el Modelo 2.
@@ -268,7 +273,7 @@ plot(allEffects(mod.lm3))
 
 \newpage
 
-# Anexos - Modelos descartados
+# Anexo - Modelos descartados
 
 ## Modelo 4: Transformación polinómica
 Hemos realizado una transformación polinómica a las variables numéricas y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
