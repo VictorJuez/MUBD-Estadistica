@@ -42,6 +42,15 @@
   pdfcreator={LaTeX via pandoc}}
 \urlstyle{same} % disable monospaced font for URLs
 \usepackage[margin=1in]{geometry}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -67,8 +76,8 @@
 \begin{document}
 \maketitle
 
-\hypertarget{anuxe1lisis-de-variables}{%
-\section{Análisis de variables}\label{anuxe1lisis-de-variables}}
+\hypertarget{conjunto-de-datos}{%
+\section{Conjunto de datos}\label{conjunto-de-datos}}
 
 El conjunto de datos consta de las siguientes variables:
 
@@ -128,6 +137,9 @@ A continuación mostramos la descriptiva de los datos:
 ##  Max.   :977.0
 \end{verbatim}
 
+\hypertarget{analisis-de-las-variables}{%
+\section{Analisis de las variables}\label{analisis-de-las-variables}}
+
 \hypertarget{categorizaciuxf3n-de-la-variable-hora}{%
 \subsection{Categorización de la variable
 hora}\label{categorizaciuxf3n-de-la-variable-hora}}
@@ -161,65 +173,369 @@ numericas}\label{descriptiva-de-las-variables-numericas}}
 \includegraphics{informe_files/figure-latex/unnamed-chunk-6-1.pdf}
 
 Como podemos observar en la descriptiva que mostramos a arriba, vemos
-que la variable temp y atemp estan muy relacionadas, así que vamos a
-analizar cual de las dos predice peor la respuesta para descartarla.
+que la variable temp y atemp estan muy relacionadas. Generamos un modelo
+utilizando cada una de las variables por separado para ver cual de las
+dos predice peor el resultado y eliminarla.
 
-\hypertarget{analisis-de-la-variable-temp}{%
-\subsubsection{Analisis de la variable
-Temp:}\label{analisis-de-la-variable-temp}}
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+& Modelo utilizando \texttt{Atemp} & Modelo utilizando
+\texttt{Temp}\tabularnewline
+\midrule
+\endhead
+R-squared & 0.1578 & 0.1537\tabularnewline
+\bottomrule
+\end{longtable}
 
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = count ~ temp, data = datos)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -293.73 -112.49  -32.32   79.01  741.84 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)   4.0011     5.2937   0.756     0.45    
-## temp          9.2474     0.2437  37.950   <2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 167.2 on 7687 degrees of freedom
-## Multiple R-squared:  0.1578,   Adjusted R-squared:  0.1577 
-## F-statistic:  1440 on 1 and 7687 DF,  p-value: < 2.2e-16
-\end{verbatim}
-
-\hypertarget{analisis-de-la-variable-atemp}{%
-\subsubsection{Analisis de la variable
-Atemp:}\label{analisis-de-la-variable-atemp}}
-
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = count ~ atemp, data = datos)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -297.99 -113.88  -33.36   80.77  740.65 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(>|t|)    
-## (Intercept)  -7.3044     5.6520  -1.292    0.196    
-## atemp         8.3862     0.2245  37.360   <2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 167.6 on 7687 degrees of freedom
-## Multiple R-squared:  0.1537,   Adjusted R-squared:  0.1536 
-## F-statistic:  1396 on 1 and 7687 DF,  p-value: < 2.2e-16
-\end{verbatim}
-
-Dados los resultados, eliminamos la variable Atemp ya que predice peor
-el resultado (PONER RESULTADOS)
+\texttt{Atemp} describe mejor el resultado (R-squared mayor), eliminamos
+la variable \texttt{Temp}.
 
 \hypertarget{variables-categoricas}{%
 \subsection{Variables categoricas}\label{variables-categoricas}}
 
-\includegraphics{informe_files/figure-latex/unnamed-chunk-9-1.pdf}
+\includegraphics{informe_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+Vemos que a primera vista parece que algunas categorias van a influir
+más en la respuesta que otras. Las que tinen boxplots muy similares
+entre categorías menos representativas van a ser, como es el caso de
+\texttt{Holiday} y \texttt{Working\ day}.
+
+\hypertarget{generaciuxf3n-de-modelos}{%
+\section{Generación de modelos}\label{generaciuxf3n-de-modelos}}
+
+\hypertarget{modelo-1-utilizando-todas-las-variables}{%
+\subsection{Modelo 1: Utilizando todas las
+variables}\label{modelo-1-utilizando-todas-las-variables}}
+
+\begin{itemize}
+\tightlist
+\item
+  Variables utilizadas:
+  \texttt{year,\ season,\ holiday,\ workingday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
+\end{itemize}
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+Propiedad & Valores\tabularnewline
+\midrule
+\endhead
+Residual standard error & 111.3\tabularnewline
+Multiple R-squared & 0.6276\tabularnewline
+p-value & \textless{} 2.2e-16\tabularnewline
+\bottomrule
+\end{longtable}
+
+\hypertarget{modelo-2-selecciuxf3n-automuxe1tica-de-variables}{%
+\subsection{Modelo 2: Selección automática de
+variables}\label{modelo-2-selecciuxf3n-automuxe1tica-de-variables}}
+
+Hemos utilizado el método matemático AIC (Akaike Information Criterion)
+para determinar qué conjunto de variables es el óptimo para explicar el
+modelo y cualos sería conveniente eliminar. Recordemos que cuanto menor
+es el AIC mejor.
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+Variable a eliminar & AIC eliminando la variable\tabularnewline
+\midrule
+\endhead
+\texttt{workingday} & 72472\tabularnewline
+\texttt{\textless{}ninguna\textgreater{}} & 72473\tabularnewline
+\texttt{windspeed} & 72474\tabularnewline
+\texttt{holiday} & 72476\tabularnewline
+\texttt{weather} & 72562\tabularnewline
+\texttt{humidity} & 72664\tabularnewline
+\texttt{season} & 72862\tabularnewline
+\texttt{temp} & 73040\tabularnewline
+\texttt{year} & 73501\tabularnewline
+\texttt{hourCategory} & 77039\tabularnewline
+\bottomrule
+\end{longtable}
+
+Eliminamos la variable \texttt{workingday} y generamos otro modelo. A
+continuación el resultado.
+
+\begin{itemize}
+\tightlist
+\item
+  Variables utilizadas:
+  \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
+\end{itemize}
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+Propiedad & Valores\tabularnewline
+\midrule
+\endhead
+Residual standard error & 111.3\tabularnewline
+Multiple R-squared & 0.6275\tabularnewline
+p-value & \textless{} 2.2e-16\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{itemize}
+\tightlist
+\item
+  Vemos un resultado prácticamente idéntico al del Modelo 1 pero
+  utilizando una variable menos.
+\end{itemize}
+
+\hypertarget{anuxe1lisis-de-colinealidad-de-las-variables}{%
+\subsubsection{Análisis de colinealidad de las
+variables}\label{anuxe1lisis-de-colinealidad-de-las-variables}}
+
+Utilizamos el indicador de VIF para analizar la colinealidad de las
+variables restantes por si tuviéramos que eliminar alguna más.
+Consideramos un valor de VIF \textless{} 5 como bueno.
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+Variable & VIF\tabularnewline
+\midrule
+\endhead
+year & 1.025830\tabularnewline
+season & 3.169114\tabularnewline
+holiday & 1.003029\tabularnewline
+weather & 1.292185\tabularnewline
+temp & 3.083793\tabularnewline
+humidity & 1.684752\tabularnewline
+windspeed & 1.175091\tabularnewline
+hourCategory & 1.319474\tabularnewline
+\bottomrule
+\end{longtable}
+
+Podemos observar que el indicador VIF de todas las variables se mantiene
+por debajo del 5, lo que nos indica que hay poca colinealidad entre las
+variables y que no tendríamos que eliminar ninguna.
+
+\hypertarget{validaciuxf3n-de-las-premisas}{%
+\subsubsection{Validación de las
+premisas}\label{validaciuxf3n-de-las-premisas}}
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-11-1.pdf}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Homocedasticidad}: Vemos una forma de cono clara, no se
+  cumple.
+\item
+  \textbf{Linealidad}: Hay curvatura, tampoco se cumple.
+\item
+  \textbf{Normalidad de los residuos}: Desviación de la normal tanto en
+  valores pequeños y granes, no se cumple.
+\end{itemize}
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-12-1.pdf}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Independencia}: Se cumple, vemos la misma varianza de los
+  residuos a lo largo del orden en que aparacene en el conjunto de
+  datos.
+\end{itemize}
+
+\hypertarget{transformaciuxf3n-de-la-variable-resupesta}{%
+\subsection{Transformación de la variable
+resupesta}\label{transformaciuxf3n-de-la-variable-resupesta}}
+
+Hemos generado dos nuevos modelos utilizando la transformación
+logarítmica y la de BoxCox de la variable respuesta. A continuación los
+resultados.
+
+\begin{longtable}[]{@{}lll@{}}
+\toprule
+& Transformación logarítmica & Transformación BoxCox\tabularnewline
+\midrule
+\endhead
+R-squared & 0.7184 & 0.7418\tabularnewline
+Residual standard error & 0.7899 & 0.5919\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{itemize}
+\tightlist
+\item
+  En general vemos una mejora sustancial utilizando una transformación
+  en la variable respuesta.
+\item
+  De las dos transformaciones, nos quedamos con la de BoxCox ya que nos
+  da un mejor resultado.
+\end{itemize}
+
+\hypertarget{modelo-final---transformaciuxf3n-boxcox}{%
+\subsection{Modelo final - Transformación
+BoxCox}\label{modelo-final---transformaciuxf3n-boxcox}}
+
+\begin{itemize}
+\item
+  Variables utilizadas:
+  \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
+\item
+  Transformaciones:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    BoxCox en la variable respuesta
+  \item
+    Categorización de la variable hora
+  \end{itemize}
+\item
+  Resultado:
+
+  \begin{longtable}[]{@{}lll@{}}
+  \toprule
+  Propiedes & Valores &\tabularnewline
+  \midrule
+  \endhead
+  Residual standard error & 0.5919 &\tabularnewline
+  Multiple R-squared & 0.7418 &\tabularnewline
+  p-value & \textless{} 2.2e-16 &\tabularnewline
+  \bottomrule
+  \end{longtable}
+\item
+  Vemos un resultado prácticamente idéntico al del Modelo 1 pero
+  utilizando una variable menos.
+\end{itemize}
+
+\hypertarget{validaciuxf3n-del-modelo}{%
+\subsubsection{Validación del modelo}\label{validaciuxf3n-del-modelo}}
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-14-1.pdf}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Homocedasticidad}: Se cumple, sigue habiendo más dispersión en
+  el centro que en los extremos, pero ya no tenemos la forma de cono que
+  teníamos en el Modelo 2.
+\item
+  \textbf{Linealidad}: Se cumple, hay curvatura pero muy leve.
+\item
+  \textbf{Normalidad de los residuos}: Sigue desviándose en valores
+  altos pero podríamos considerar que ahora se cumple, ha mejorado
+  respecto al Modelo 2.
+\end{itemize}
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-15-1.pdf}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Independencia}: Se cumple, vemos la misma varianza de los
+  residuos a lo largo del orden en que aparacene en el conjunto de
+  datos.
+\end{itemize}
+
+\hypertarget{descriptiva-del-modelo}{%
+\subsubsection{Descriptiva del modelo}\label{descriptiva-del-modelo}}
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-16-1.pdf}
+
+\hypertarget{modelos-descartados}{%
+\section{Modelos descartados}\label{modelos-descartados}}
+
+\hypertarget{modelo-5-transformaciuxf3n-polinuxf3mica}{%
+\subsection{Modelo 5: Transformación
+polinómica}\label{modelo-5-transformaciuxf3n-polinuxf3mica}}
+
+Hemos realizado una transformación polinómica a las variables numéricas
+y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
+
+\begin{itemize}
+\item
+  Modelo de partida: Modelo 3
+\item
+  Variables utilizadas:
+  \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
+\item
+  Transformaciones:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    BoxCox en la variable respuesta
+  \item
+    Categorización de la variable hora
+  \item
+    Transformación polinómica de las variables \texttt{temp},
+    \texttt{humidity} y \texttt{windspeed}
+  \end{itemize}
+\item
+  Resultado:
+
+  \begin{longtable}[]{@{}ll@{}}
+  \toprule
+  Propiedes & Valores\tabularnewline
+  \midrule
+  \endhead
+  Residual standard error & 0.5884\tabularnewline
+  Multiple R-squared & 0.7449\tabularnewline
+  p-value & \textless{} 2.2e-16\tabularnewline
+  \bottomrule
+  \end{longtable}
+\item
+  Vemos que hay una diferencia insignificante respecto al Modelo 3, por
+  lo que no vemos que sea necesario utilizar la transformación
+  polinómica
+\end{itemize}
+
+\hypertarget{modelo-6-eliminar-observaciones-influyentes}{%
+\section{Modelo 6: Eliminar observaciones
+influyentes}\label{modelo-6-eliminar-observaciones-influyentes}}
+
+Analizamos las observaciones influyentes del Modelo 3:
+
+\includegraphics{informe_files/figure-latex/unnamed-chunk-17-1.pdf}
+
+Vemos que las observaciones 2005 y 6737 son las que tienen una distancia
+de Cook mayor, por lo que son las más influyentes. A continuación sus
+distancias de Cook respectivas:
+
+\begin{longtable}[]{@{}ll@{}}
+\toprule
+Observación & Distancia de Cook\tabularnewline
+\midrule
+\endhead
+2005 & 0.0050\tabularnewline
+6737 & 0.0052\tabularnewline
+\bottomrule
+\end{longtable}
+
+Eliminamos estas dos observaciones y generamos un nuevo modelo.
+
+\begin{itemize}
+\item
+  Modelo de partida: Modelo 3
+\item
+  Variables utilizadas:
+  \texttt{year,\ season,\ holiday,\ weather,\ temp,\ humidity,\ windspeed,\ hourCategory}
+\item
+  Transformaciones:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Eliminación de las observaciones influyentes 2005 y 6737
+  \end{itemize}
+\item
+  Resultado:
+
+  \begin{longtable}[]{@{}ll@{}}
+  \toprule
+  Propiedes & Valores\tabularnewline
+  \midrule
+  \endhead
+  Residual standard error & 0.5911\tabularnewline
+  Multiple R-squared & 0.7425\tabularnewline
+  p-value & \textless{} 2.2e-16\tabularnewline
+  \bottomrule
+  \end{longtable}
+\item
+  De nuevo, la diferencia es insignificante respecto el Modelo 3, por lo
+  que no interesa hacer esta transformación
+\end{itemize}
 
 \end{document}

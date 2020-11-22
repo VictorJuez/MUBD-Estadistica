@@ -34,7 +34,6 @@ rm(list = ls())
 ##-- 2.Lee los datos p1a_train.csv
 ## Pista: fija el directorio donde tienes los datos y leelos con la instruccion read.table
 datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
-datosOriginal = datos
 
 ##-- 3. Visualiza los datos para asegurarte que los has leido correctamente. Haz una descriptiva y elimina la variable id de tus datos por comodidad (no la utilizaras)
 ##-- Pista: para describir tus datos, usa la instrucci�n summary. Para eliminar la variable asigna el valor NULL a toda la variable
@@ -68,7 +67,6 @@ datos$weather = factor(datos$weather)
 plot(count~hour, datos)
 datos$hourCategory = cut(datos$hour, c(0,6,8,16,19,23), labels = c('morning', 'moving', 'worktime', 'moving', 'night'), include.lowest = TRUE)
 datos$hour = NULL
-View(datos)
 plot(count~hourCategory, datos)
 
 ############################################################
@@ -133,7 +131,7 @@ for(i in c(1, 2, 3, 4, 5, 10)){
 mod.lm1 = lm(count~.,datos)
 summary(mod.lm1)
 ## R-squared 0.6276
-## Standard error 114.8
+## Standard error 111.3
 ## Vemos que workingday y windspeed tinenen una significancia muy baja
 
 
@@ -197,16 +195,16 @@ datos$countLog <- log(datos$count)
 mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
 mod.lm3 = step(mod.lm3) ## Validar que no se elimina ninguna variable mas
 summary(mod.lm3)
-## R-squared: 0.6317
-## standard error: 1.798
+## R-squared: 0.7418
+## standard error: 0.5919
 ## Vemos que el R-squared augmenta levemente respecto el modelo anterior (lm2) 0.63 vs 0.60. 
 ## Por otra parte el error residual se disminuye drasticamente, 117 vs 1.78 ahora, pero hay que considerar que este modelo utiliza la transformacion de BoxCox con lo cual los valores son mucho mas pequenos que los originales y por eso el error es menor
 
 mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory,datos)
 mod.lm4 = step(mod.lm4) ## Vemos que en este caso se elimina ademas la variable holiday
 summary(mod.lm4)
-## R-squared: 0.5506 
-## standard error: 0.9978
+## R-squared: 0.7184 
+## standard error: 0.7899
 ## Vemos que es bastante peor que utilizando BoxCox, tenemos un R-squared 0.55 vs 0.63 en el que utilizamos BoxCox. Asi que descartamos este y nos quedamos con lm3
 ## mod.lm3 con transformacion BoxCox da mejor resultado
 
@@ -252,8 +250,8 @@ for(i in 5:6){
 mod.lm5 = lm(countBC ~ year + season + holiday + weather + poly(temp,2) + poly(humidity,2) + poly(windspeed,2) + hourCategory,datos)
 mod.lm5 = step(mod.lm5)
 summary(mod.lm5)
-## R-squared = 0.6364
-## residual standard error = 1.787
+## R-squared = 0.7449
+## residual standard error = 0.5884
 ## Vemos que hay una diferencia insignificante respecto al modelo lm3, hablamos de milesimas, por lo que no vemos que sea necesario utilizar las transformaciones polinomicas
 
 par(mfrow=c(2,2))

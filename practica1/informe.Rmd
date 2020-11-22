@@ -46,7 +46,7 @@ datos$weather = factor(datos$weather)
 #- Modelo final: el modelo 3 plot(alleffects)
 #------------------------
 ```
-# Análisis de variables
+# Conjunto de datos
 
 El conjunto de datos consta de las siguientes variables:
 
@@ -69,6 +69,7 @@ A continuación mostramos la descriptiva de los datos:
 summary(datos)
 ```
 
+# Analisis de las variables
 ## Categorización de la variable hora
 
 Descriptiva de la variable respuesta en función de la variable hora:
@@ -98,21 +99,17 @@ datos$hour = NULL
 pairs(datos[, c(6:10)])
 ```
 
-Como podemos observar en la descriptiva que mostramos a arriba, vemos que la variable temp y atemp estan muy relacionadas, así que vamos a analizar cual de las dos predice peor la respuesta para descartarla.
+Como podemos observar en la descriptiva que mostramos a arriba, vemos que la variable temp y atemp estan muy relacionadas. Generamos un modelo utilizando cada una de las variables por separado para ver cual de las dos predice peor el resultado y eliminarla.
 
-### Analisis de la variable Temp:
-  ```{r}
-  lmTemp = lm(count ~ temp, datos)
-  summary(lmTemp)
-  ```
+```{r}
+datos$atemp = NULL
+```
 
-### Analisis de la variable Atemp:
-  ```{r}
-  lmAtemp = lm(count ~ atemp, datos)
-  summary(lmAtemp)
-  ```
+| |Modelo utilizando `Atemp`| Modelo utilizando `Temp`|
+|---|---|---|
+|R-squared|  0.1578 | 0.1537 |
 
-Dados los resultados, eliminamos la variable Atemp ya que predice peor el resultado (PONER RESULTADOS)
+`Atemp` describe mejor el resultado (R-squared mayor), eliminamos la variable `Temp`.
 
 ## Variables categoricas
 
@@ -122,3 +119,200 @@ for(i in c(1, 2, 3, 4, 5, 10)){
   boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
 }
 ```
+
+Vemos que a primera vista parece que algunas categorias van a influir más en la respuesta que otras. Las que tinen boxplots muy similares entre categorías menos representativas van a ser, como es el caso de `Holiday` y `Working day`.
+
+# Generación de modelos
+## Modelo 1: Utilizando todas las variables
+
+```{r}
+mod.lm1 = lm(count~.,datos)
+```
+
+- Variables utilizadas: `year, season, holiday, workingday, weather, temp, humidity, windspeed, hourCategory`
+
+| Propiedad | Valores |
+|---|---|
+|Residual standard error | 111.3 |
+|Multiple R-squared | 0.6276 |
+|p-value | < 2.2e-16 |
+
+## Modelo 2: Selección automática de variables
+
+Hemos utilizado el método matemático AIC (Akaike Information Criterion) para determinar qué conjunto de variables es el óptimo para explicar el modelo y cualos sería conveniente eliminar. Recordemos que cuanto menor es el AIC mejor.
+
+| Variable a eliminar | AIC eliminando la variable |
+|---|---|
+| `workingday` | 72472 |
+| `<ninguna>` | 72473|
+|`windspeed`| 72474|
+|`holiday`| 72476 |
+|`weather` | 72562 |
+|`humidity` | 72664|
+|`season` | 72862|
+|`temp` |73040 |
+|`year` | 73501|
+|`hourCategory` | 77039|
+
+Eliminamos la variable `workingday` y generamos otro modelo. A continuación el resultado.
+
+- Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
+
+| Propiedad | Valores |
+|---|---|
+|Residual standard error | 111.3 |
+|Multiple R-squared | 0.6275 |
+|p-value | < 2.2e-16 |
+
+- Vemos un resultado prácticamente idéntico al del Modelo 1 pero utilizando una variable menos.
+
+### Análisis de colinealidad de las variables
+Utilizamos el indicador de VIF para analizar la colinealidad de las variables restantes por si tuviéramos que eliminar alguna más. Consideramos un valor de VIF < 5 como bueno.
+
+| Variable | VIF |
+|---|---|
+|year         | 1.025830 | 
+|season       | 3.169114 | 
+|holiday      | 1.003029 | 
+|weather      | 1.292185 | 
+|temp         | 3.083793 | 
+|humidity     | 1.684752 | 
+|windspeed    | 1.175091 | 
+|hourCategory | 1.319474 | 
+
+Podemos observar que el indicador VIF de todas las variables se mantiene por debajo del 5, lo que nos indica que hay poca colinealidad entre las variables y que no tendríamos que eliminar ninguna.
+
+### Validación de las premisas
+
+```{r results = FALSE}
+mod.lm2 = step(mod.lm1)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(mod.lm2)
+```
+
+- **Homocedasticidad**: Vemos una forma de cono clara, no se cumple.
+- **Linealidad**: Hay curvatura, tampoco se cumple.
+- **Normalidad de los residuos**: Desviación de la normal tanto en valores pequeños y granes, no se cumple.
+
+```{r}
+plot(resid(mod.lm2))
+```
+
+- **Independencia**: Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparacene en el conjunto de datos.
+
+## Transformación de la variable resupesta
+
+```{r results = FALSE, fig.show='hide', messages = FALSE}
+library(car)
+bc <- boxCox(mod.lm2)
+lamb = bc$x[which.max(bc$y)]
+datos$countBC <- datos$count^lamb
+```
+
+Hemos generado dos nuevos modelos utilizando la transformación logarítmica y la de BoxCox de la variable respuesta. A continuación los resultados.
+
+| |Transformación logarítmica| Transformación BoxCox|
+|---|---|---|
+|R-squared| 0.7184 | 0.7418 |
+| Residual standard error | 0.7899 | 0.5919 |
+
+- En general vemos una mejora sustancial utilizando una transformación en la variable respuesta.
+- De las dos transformaciones, nos quedamos con la de BoxCox ya que nos da un mejor resultado.
+
+## Modelo final - Transformación BoxCox
+
+- Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
+- Transformaciones:
+  - BoxCox en la variable respuesta
+  - Categorización de la variable hora
+- Resultado:
+  
+  |Propiedes|Valores|
+  |---|---|---|
+  | Residual standard error | 0.5919 |
+  | Multiple R-squared | 0.7418 |
+  | p-value | < 2.2e-16 |
+
+- Vemos un resultado prácticamente idéntico al del Modelo 1 pero utilizando una variable menos.
+
+### Validación del modelo
+
+```{r}
+mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
+par(mfrow=c(2,2))
+plot(mod.lm3)
+```
+
+- **Homocedasticidad**: Se cumple, sigue habiendo más dispersión en el centro que en los extremos, pero ya no tenemos la forma de cono que teníamos en el Modelo 2.
+- **Linealidad**: Se cumple, hay curvatura pero muy leve.
+- **Normalidad de los residuos**: Sigue desviándose en valores altos pero podríamos considerar que ahora se cumple, ha mejorado respecto al Modelo 2.
+
+```{r}
+plot(resid(mod.lm3))
+```
+
+- **Independencia**: Se cumple, vemos la misma varianza de los residuos a lo largo del orden en que aparacene en el conjunto de datos.
+
+### Descriptiva del modelo
+
+```{r messages = FALSE, fig.width=10, fig.height=10}
+library('effects')
+par(mfrow=c(2,4))
+plot(allEffects(mod.lm3))
+```
+
+
+# Modelos descartados
+
+## Modelo 5: Transformación polinómica
+Hemos realizado una transformación polinómica a las variables numéricas y generado un nuevo modelo con ellas. Vemos el resultado a continuación.
+
+- Modelo de partida: Modelo 3
+- Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
+- Transformaciones:
+  - BoxCox en la variable respuesta
+  - Categorización de la variable hora
+  - Transformación polinómica de las variables `temp`, `humidity` y `windspeed`
+- Resultado:
+  
+  |Propiedes|Valores|
+  |---|---|
+  | Residual standard error | 0.5884 |
+  | Multiple R-squared | 0.7449 |
+  | p-value | < 2.2e-16 |
+
+-  Vemos que hay una diferencia insignificante respecto al Modelo 3, por lo que no vemos que sea necesario utilizar la transformación polinómica
+
+# Modelo 6: Eliminar observaciones influyentes
+Analizamos las observaciones influyentes del Modelo 3:
+
+```{r}
+influenceIndexPlot(mod.lm3)
+```
+
+Vemos que las observaciones 2005 y 6737 son las que tienen una distancia de Cook mayor, por lo que son las más influyentes. A continuación sus distancias de Cook respectivas:
+
+|Observación|Distancia de Cook|
+|---|---|
+| 2005 | 0.0050 |
+| 6737 | 0.0052 |
+
+Eliminamos estas dos observaciones y generamos un nuevo modelo.
+
+- Modelo de partida: Modelo 3
+- Variables utilizadas: `year, season, holiday, weather, temp, humidity, windspeed, hourCategory`
+- Transformaciones:
+  - Eliminación de las observaciones influyentes 2005 y 6737
+- Resultado:
+  
+  |Propiedes|Valores|
+  |---|---|
+  | Residual standard error | 0.5911 |
+  | Multiple R-squared | 0.7425 |
+  | p-value | < 2.2e-16 |
+
+-  De nuevo, la diferencia es insignificante respecto el Modelo 3, por lo que no interesa hacer esta transformación
+
