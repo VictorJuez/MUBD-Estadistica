@@ -26,6 +26,7 @@
 ##-- 1.Borra todos los objetos que tengas en memoria para que no te confundan en esta pr�ctica 
 ## Pista: instrucci�n rm o la escoba de la ventana superior derecha
 
+rm(list = ls())
 
 ############################################################
 # Lectura de datos y inspeccion
@@ -33,7 +34,6 @@
 ##-- 2.Lee los datos p1a_train.csv
 ## Pista: fija el directorio donde tienes los datos y leelos con la instruccion read.table
 datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
-datosOriginal = datos
 
 ##-- 3. Visualiza los datos para asegurarte que los has leido correctamente. Haz una descriptiva y elimina la variable id de tus datos por comodidad (no la utilizaras)
 ##-- Pista: para describir tus datos, usa la instrucci�n summary. Para eliminar la variable asigna el valor NULL a toda la variable
@@ -65,10 +65,8 @@ datos$weather = factor(datos$weather)
 # conservar�s la variable original (Opcional: cuando lo tengas claro, puedes borrar la variable original si lo deseas)
 
 plot(count~hour, datos)
-# de 7 a 12, 13 a 19, 20 a 24, 24 a 6
-datos$hourCategory = cut(datos$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night'))
+datos$hourCategory = cut(datos$hour, c(0,6,8,16,19,23), labels = c('morning', 'moving', 'worktime', 'moving', 'night'), include.lowest = TRUE)
 datos$hour = NULL
-View(datos)
 plot(count~hourCategory, datos)
 
 ############################################################
@@ -132,8 +130,8 @@ for(i in c(1, 2, 3, 4, 5, 10)){
 
 mod.lm1 = lm(count~.,datos)
 summary(mod.lm1)
-## R-squared 0.6035
-## Standard error 114.8
+## R-squared 0.6276
+## Standard error 111.3
 ## Vemos que workingday y windspeed tinenen una significancia muy baja
 
 
@@ -142,10 +140,9 @@ summary(mod.lm1)
 
 mod.lm2 = step(mod.lm1)
 summary(mod.lm2)
-## R-squared 0.6034
-## standard error 114.8
+## R-squared 0.6275
+## standard error 111.3
 ## Workingday y windspeed han sido eliminadas del modelo
-datos$windspeed = NULL
 datos$workingday = NULL
 
 ############################################################
@@ -195,19 +192,19 @@ datos$countLog <- log(datos$count)
 ##-- 14. Ajusta los modelos con las dos nuevas respuestas. �Cu�l predice mejor seg�n el R2?
 # Pista: Ajusta los modelos con la instruccion lm
 
-mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + hourCategory,datos)
+mod.lm3 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory, datos)
 mod.lm3 = step(mod.lm3) ## Validar que no se elimina ninguna variable mas
 summary(mod.lm3)
-## R-squared: 0.6317
-## standard error: 1.798
+## R-squared: 0.7418
+## standard error: 0.5919
 ## Vemos que el R-squared augmenta levemente respecto el modelo anterior (lm2) 0.63 vs 0.60. 
 ## Por otra parte el error residual se disminuye drasticamente, 117 vs 1.78 ahora, pero hay que considerar que este modelo utiliza la transformacion de BoxCox con lo cual los valores son mucho mas pequenos que los originales y por eso el error es menor
 
-mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + hourCategory,datos)
+mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory,datos)
 mod.lm4 = step(mod.lm4) ## Vemos que en este caso se elimina ademas la variable holiday
 summary(mod.lm4)
-## R-squared: 0.5506 
-## standard error: 0.9978
+## R-squared: 0.7184 
+## standard error: 0.7899
 ## Vemos que es bastante peor que utilizando BoxCox, tenemos un R-squared 0.55 vs 0.63 en el que utilizamos BoxCox. Asi que descartamos este y nos quedamos con lm3
 ## mod.lm3 con transformacion BoxCox da mejor resultado
 
@@ -250,11 +247,11 @@ for(i in 5:6){
 ##-- 17. Para aquella o aquellas variables que lo creas necesario, ajusta un polinomio con todas las variables que tengas y
 ##-- vuelve a hacer la validacion
 
-mod.lm5 = lm(countBC ~ year + season + holiday + weather + poly(temp,2) + poly(humidity,2) + hourCategory,datos)
+mod.lm5 = lm(countBC ~ year + season + holiday + weather + poly(temp,2) + poly(humidity,2) + poly(windspeed,2) + hourCategory,datos)
 mod.lm5 = step(mod.lm5)
 summary(mod.lm5)
-## R-squared = 0.6364
-## residual standard error = 1.787
+## R-squared = 0.7449
+## residual standard error = 0.5884
 ## Vemos que hay una diferencia insignificante respecto al modelo lm3, hablamos de milesimas, por lo que no vemos que sea necesario utilizar las transformaciones polinomicas
 
 par(mfrow=c(2,2))
@@ -283,7 +280,7 @@ cooksDistance = cooks.distance(mod.lm3)
 influencePlot(mod.lm3)
 
 datos2 = datos[-c(2005,6737),]
-mod.lm6 = lm(countBC ~ year + season + holiday + weather + temp + humidity + hourCategory,datos2)
+mod.lm6 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory,datos2)
 summary(mod.lm6)
 ## R-squared: 0.6323
 ## Residual standard error: 1.797
@@ -325,12 +322,11 @@ datosTest$workingday = factor(datosTest$workingday)
 datosTest$weather = factor(datosTest$weather)
 
 ## Categorizar hora
-datosTest$hourCategory = cut(datosTest$hour, c(-1,6,8,16,19,24), labels = c('night', 'morning', 'worktime', 'afternoon', 'night'))
+datosTest$hourCategory = cut(datosTest$hour, c(0,6,8,16,19,23), labels = c('morning', 'moving', 'worktime', 'moving', 'night'), include.lowest= TRUE)
 datosTest$hour = NULL
 
 ## Eliminar variables
 datosTest$atemp = NULL
-datosTest$windspeed = NULL
 datosTest$workingday = NULL
 
 ############################################################
@@ -340,11 +336,6 @@ datosTest$workingday = NULL
 ##-- obtener las predicciones en la muestra test.
 # Pista: la instruccion predict debe tener 2 parametros: el modelo final y los datos test con las variables transformadas. Guardate las
 # prediciones en una variable del mismo conjunto de datos
-
-nthroot2 <- function(x, n) {
-  sx <- sign(x)
-  return(sx * (sx * x)^(1/n))
-}
 
 prediccionesBC = predict(mod.final, datosTest)
 datosTest$predicciones = prediccionesBC^(1/lamb)
