@@ -1,0 +1,176 @@
+---
+title: "Sesion 5"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, warning=FALSE)
+```
+
+```{r}
+wine <- read.table('wine2.txt',sep=',',header=TRUE)
+```
+
+### 2. Haz una descriptiva de los datos sin escalar
+```{r}
+#summary(wine)
+pairs(wine)
+```
+
+### 3. Escala los datos y haz un heatmap
+```{r}
+wine2 <- scale(wine)
+heatmap(as.matrix(wine2))
+```
+
+### 4. Compara los 4 dendogramas resultantes de usar la distancia euclidea/manhattan y el metodo de wald y completo
+```{r}
+#{r, fig.width=10, fig.height=15}
+d1 <- dist(wine2,method='euclidean')
+d2 <- dist(wine2,method='manhattan')
+hc1 <- hclust(d1,method = "ward")    
+hc2 <- hclust(d1,method = "complete")    
+hc3 <- hclust(d2,method = "ward")    
+hc4 <- hclust(d2,method = "complete")
+par(mfrow=c(4,1),las=1)
+plot(hc1,cex=0.7, main = 'euclidean, ward')
+plot(hc2,cex=0.7, main = 'euclidean, complete')
+plot(hc3,cex=0.7, main = 'manhattan, ward')
+plot(hc4,cex=0.7, main = 'manhattan, complete')
+```
+
+### 5. Segun los 4 dendogramas, ¿Cuantos grupos de vino crees que hay? Haz la particion segun el numero de grupos que creas conveniente para cada uno de los sistemas
+```{r}
+ct1 <- cutree(hc1,k=3)
+ct2 <- cutree(hc2,k=3)
+ct3 <- cutree(hc3,k=3)
+ct4 <- cutree(hc4,k=3)
+```
+
+- euclidean, ward
+  ```{r}
+  ct1
+  ```
+- euclidean, complete
+  ```{r}
+  ct2
+  ```
+- manhattan, ward
+  ```{r}
+  ct3
+  ```
+- manhattan, complete
+  ```{r}
+  ct4
+  ```
+
+### 6. Escoge una partición de las anteriores y calcula el % de variabilidad explicada
+Inercia entre (con wine)
+
+```{r}
+IB <- 0
+for(i in 1:3){
+  w <- wine[ct1==i,]                       # Seleccionar los datos segun la clasificacion escogida
+  n <- sum(ct1==i)                         # Calcular cuantos hay en ese cluster
+  ymean <- apply(wine,2,mean)              # Calcular la media global de cada variable
+  ymeangroup <- apply(w,2,mean)            # Calcular la media de este cluster para cada cluster
+  ib <- n*sum((ymeangroup-ymean)^2)        # Inercia debida a este cluster
+  IB <- IB + ib                            # Inercia entre acumalada
+}
+IB
+```
+
+Inercia global (con wine)
+
+```{r}
+IT <- sum(apply(scale(wine,scale=FALSE)^2,2,sum,na.rm=TRUE))
+IT
+```
+
+Varianza explicada
+
+```{r}
+VE <- round(100*IB/IT,2)
+VE
+cor(d1, cophenetic(hc1)) 
+```
+
+### 7. Define las caracteristicas mas relevantes de cada grupo de vinos segun la clasificacion escogida. 
+En que caracteristica difieren menos?
+
+```{r, fig.width=10, fig.height=10}
+#apply(wine,2,tapply,ct1,summary)
+
+par(mfrow=c(4,4),las=1)
+for(i in 1:13) boxplot(wine2[,i]~ct1,main=colnames(wine2)[i])
+```
+
+```{r}
+library(FactoMineR)
+pca <- PCA(wine,graph=FALSE)
+par(mfrow=c(1,2))
+#plot(pca,col.ind=ct1,label='none')
+plot(pca,choix = "var",cex=0.7)
+```
+
+# Ejercicio 5-2
+
+- Variables
+  - FRESH: annual spending (m.u.) on fresh products (Continuous); 
+  - MILK: annual spending (m.u.) on milk products (Continuous); 
+  - GROCERY: annual spending (m.u.)on grocery products (Continuous); 
+  - FROZEN: annual spending (m.u.)on frozen products (Continuous) 
+  - DETERGENTS_PAPER: annual spending (m.u.) on detergents and paper products (Continuous) 
+  - DELICATESSEN: annual spending (m.u.)on and delicatessen products (Continuous);
+
+```{r}
+rm(list=ls())
+library(NbClust)
+library(clValid)
+library(flexclust)
+library(cluster)
+datos <- read.table('datos/Wholesale customers data.csv',header=TRUE,sep='\t')
+```
+
+### 2. Haz una descriptiva de los datos
+Sin logaritmos
+
+```{r}
+#summary(datos)               
+datos2 <- scale(datos)            # Se saca el logaritmo para trabajar en escala multiplicativa
+par(mfrow=c(2,2))
+heatmap(datos2)                   
+pairs(datos2)
+boxplot(datos2)
+```
+
+Con logaritmos
+
+```{r}
+datos2 <- scale(log(datos+1))     # Se saca el logaritmo para trabajar en escala multiplicativa
+par(mfrow=c(2,2))
+heatmap(datos2)                   
+pairs(datos2)
+boxplot(datos2)
+```
+
+### 3. Decide el numero de clusteres segun alg?n criterio. ?Cuantos clusteres son los ideales?
+Regla del codo
+
+```{r}
+VE <- c()
+for (k in 1:10){
+  km <- kmeans(datos2,centers=k,nstart=10)
+  VE[k] <- km$betweenss/km$totss       
+}
+plot(VE,type="b",pch=19,xlab="N?mero de grupos",ylab="Variabilidad explicada")
+# numero ideal = 5
+
+set.seed(12345)
+ncluster <- NbClust(datos2, min.nc=2, max.nc=10, method="kmeans")
+#ncluster
+par(mfrow=c(1,1))
+barplot(table(ncluster$Best.n[1,]))
+# numero ideal = 2
+```
+

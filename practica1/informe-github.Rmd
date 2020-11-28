@@ -40,7 +40,7 @@ Noviembre 22, 2020
         influyentes](#modelo-5-eliminar-observaciones-influyentes)
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, eval = TRUE)
+knitr::opts_chunk$set(echo = FALSE, eval = TRUE, message = FALSE)
 ```
 
 ```{r}
