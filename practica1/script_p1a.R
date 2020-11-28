@@ -33,7 +33,7 @@ rm(list = ls())
 ############################################################
 ##-- 2.Lee los datos p1a_train.csv
 ## Pista: fija el directorio donde tienes los datos y leelos con la instruccion read.table
-datos = read.table('p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datos = read.table('../p1a_train.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
 
 ##-- 3. Visualiza los datos para asegurarte que los has leido correctamente. Haz una descriptiva y elimina la variable id de tus datos por comodidad (no la utilizaras)
 ##-- Pista: para describir tus datos, usa la instrucci�n summary. Para eliminar la variable asigna el valor NULL a toda la variable
@@ -109,7 +109,7 @@ for(i in 6:8){
   with(datos,lines(lowess(count~datos[,i]),col=2))
 }
 
-# Si que son relaciones lineales aunque vemos que windspeed es constante
+# Si que son relaciones lineales aunque vemos que windspeed es mas constante
 
 ##-- 8b. Haz los boxplots bivariantes con la respuesta (count) y las variables categ�ricas (factores)
 # �Crees que influyen en la respuesta s�lo viendo la descriptiva?
@@ -120,7 +120,7 @@ for(i in c(1, 2, 3, 4, 5, 10)){
   boxplot(datos$count~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="count")
 }
 
-# Algunas mas que otras, las que tinen boxplots muy similares en las diferentes categorias menos representativas van a ser (Holiday y working day)
+# Algunas mas que otras, las que tienen boxplots muy similares en las diferentes categorias menos representativas van a ser (Holiday y working day)
 
 ############################################################
 # Seleccion de modelo y variables
@@ -132,18 +132,21 @@ mod.lm1 = lm(count~.,datos)
 summary(mod.lm1)
 ## R-squared 0.6276
 ## Standard error 111.3
-## Vemos que workingday y windspeed tinenen una significancia muy baja
+## Vemos que workingday y windspeed tienen una significancia muy baja
 
 
 ##--10. Realiza una selecci�n autom�tica de variables y discute que ha pasado
 # Pista: Usa la instrucci�n step para la selecci�n
 
 mod.lm2 = step(mod.lm1)
+# Step utiliza el metodo matematico AIC para determinar que caracteristicas conviene eliminar del modelo, cuanto menor es el AIC mejor. Vemos que eliminar workingday resulta en el menor AIC.
+# No se elimina ninguna mas, ya que vemos que el siguiente paso que mejor AIC resulta es eliminar <none>, es decir, ninguna variable.
+# Workingday ha sido eliminada del modelo
+datos$workingday = NULL
+
 summary(mod.lm2)
 ## R-squared 0.6275
 ## standard error 111.3
-## Workingday y windspeed han sido eliminadas del modelo
-datos$workingday = NULL
 
 ############################################################
 # Colinealidad
@@ -152,9 +155,9 @@ datos$workingday = NULL
 ##-- �Hay que eliminar alguna variable?�Cual eliminarias si tuvieses que eliminar una?
 # Pista: Primero debes instalar y cargar el paquete car. Usa la funci�n vif para evaluar la colinealidad
 library(car)
-vif(mod.lm2) ## TODO: preguntar que variable respuesta fijarnos (GVIF, Df, o GVIF')
+vif(mod.lm2)
 # Vemos que todos los valores son menores a 5 asi que no hay que eliminar ninguna variable
-# Elminariamos las que tienen un mayor valor de vif, en este caso seria la variable season con un vif de 3.20
+# Elminariamos las que tienen un mayor valor de vif, en este caso seria la variable season con un vif de 3.169
 
 ############################################################
 # Validacion
@@ -165,7 +168,7 @@ vif(mod.lm2) ## TODO: preguntar que variable respuesta fijarnos (GVIF, Df, o GVI
 # que te aparecen en los datos (funciones plot y resid)
 par(mfrow=c(2,2))
 plot(mod.lm2)
-plot(resid(mod.lm2)) ## TODO: como se analiza? consideramos que haya la misma varianza a lo largo de los valores
+plot(resid(mod.lm2))
 
 # Forma de cono clara -> Homocedasticidad, no se cumple, hay que arreglarlo
 # linealidad -> observamos curvatura, no se cumple, hay que arreglarlo
@@ -197,15 +200,15 @@ mod.lm3 = step(mod.lm3) ## Validar que no se elimina ninguna variable mas
 summary(mod.lm3)
 ## R-squared: 0.7418
 ## standard error: 0.5919
-## Vemos que el R-squared augmenta levemente respecto el modelo anterior (lm2) 0.63 vs 0.60. 
-## Por otra parte el error residual se disminuye drasticamente, 117 vs 1.78 ahora, pero hay que considerar que este modelo utiliza la transformacion de BoxCox con lo cual los valores son mucho mas pequenos que los originales y por eso el error es menor
+## Vemos que el R-squared augmenta en gran medida respecto el modelo anterior (lm2) 0.7418 vs 0.6275. 
+## Por otra parte el error residual se disminuye drasticamente, 111.3 vs 0.5919 ahora, pero hay que considerar que este modelo utiliza la transformacion de BoxCox con lo cual los valores son mucho mas pequenos que los originales y por eso el error es menor
 
 mod.lm4 = lm(countLog ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory,datos)
-mod.lm4 = step(mod.lm4) ## Vemos que en este caso se elimina ademas la variable holiday
+mod.lm4 = step(mod.lm4) ## Validar que no se elimina ninguna variable mas
 summary(mod.lm4)
 ## R-squared: 0.7184 
 ## standard error: 0.7899
-## Vemos que es bastante peor que utilizando BoxCox, tenemos un R-squared 0.55 vs 0.63 en el que utilizamos BoxCox. Asi que descartamos este y nos quedamos con lm3
+## Vemos que es ligeramente peor queBoxCox, tenemos un R-squared 0.7184 vs 0.7418 en el que utilizamos BoxCox. Asi que descartamos este y nos quedamos con lm3
 ## mod.lm3 con transformacion BoxCox da mejor resultado
 
 ############################################################
@@ -219,8 +222,8 @@ par(mfrow=c(2,2))
 plot(mod.lm3)
 plot(resid(mod.lm3))
 ## Linealidad = se cumple, hay curvatura pero muy leve
-## Homoscedasticidad = no se cumple, sigue habiendo mas dispersion en el centro que en los extremos, pero ya no tenemos forma de cono que teniamos en el modelo lm2 por lo que ha mejorado
-## Normalidad = ha mejorado pero aun no se cumple
+## Homoscedasticidad = sigue habiendo mas dispersion en el centro que en los extremos, pero ya no tenemos forma de cono que teniamos en el modelo lm2 por lo que ha mejorado
+## Normalidad = ha mejorado aunque mantiene aun cierto grado de variacion en los extremos
 
 par(mfrow=c(2,2))
 plot(mod.lm4)
@@ -228,7 +231,7 @@ plot(resid(mod.lm4))
 ## Peores resultados que el modelo 3
 ## Homocedasticidad = no se cumple hay forma de cono inverso
 ## Normalidad = no se cumple, y aun peor que en el modelo lm3
-## linealidad = no se cumple, curvatura mas destacada que en el modelo anterior
+## linealidad = si se puede considerar que la cumple ya que presenta poca curvatura
 
 ############################################################
 # Transformaciones polinomicas
@@ -238,11 +241,12 @@ plot(resid(mod.lm4))
 # Pista: si has cambiado de variable respuesta, vuelve a hacer los gr�ficos bivariantes y los suavizados
 
 par(mfrow=c(2,4))
-for(i in 5:6){
+for(i in 5:7){
   plot(datos$countBC~datos[,i],main=names(datos)[i],xlab=names(datos)[i],ylab="countBC")
   with(datos,lines(lowess(countBC~datos[,i]),col=2))
 }
-## NO, vemos que las dos categorias (temp y humidity) siguen una relacion lineal respecto la variable countBC 
+
+## Vemos que las categorias (temp, humidity y windspeed) siguen una relacion lineal respecto la variable countBC, con poca curvatura.
 
 ##-- 17. Para aquella o aquellas variables que lo creas necesario, ajusta un polinomio con todas las variables que tengas y
 ##-- vuelve a hacer la validacion
@@ -282,14 +286,15 @@ influencePlot(mod.lm3)
 datos2 = datos[-c(2005,6737),]
 mod.lm6 = lm(countBC ~ year + season + holiday + weather + temp + humidity + windspeed + hourCategory,datos2)
 summary(mod.lm6)
-## R-squared: 0.6323
-## Residual standard error: 1.797
+## R-squared: 0.7425
+## Residual standard error: 0.5911
 ## Hay una mejora casi insignificante respecto el modelo lm3, asi que nos quedamos con el anterior
 
 par(mfrow=c(2,2))
 plot(mod.lm6)
-##-- 19. Opcional: haz todo lo que tu creas necesario para mejorar el modelo (si es que hay algo que lo pueda mejorar)
 
+
+### MODELO FINAL
 mod.final = mod.lm3
 library('effects')
 plot(allEffects(mod.final))
@@ -300,13 +305,15 @@ par(mfrow=c(1,1))
 plot(pr,datos$countBC)
 abline(0,1,col=2,lwd=2)    
 
+##-- 19. Opcional: haz todo lo que tu creas necesario para mejorar el modelo (si es que hay algo que lo pueda mejorar)
+
 ############################################################
 #
 # Parte 2. Hacer prediciones con la muestra test
 #
 ############################################################
 ##-- 20. Lee los datos test (p1a_test.csv) con la instruccion read.table
-datosTest = read.table('p1a_test.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
+datosTest = read.table('../p1a_test.csv', header = TRUE, sep = ';', dec = '.', stringsAsFactors = TRUE)
 
 ############################################################
 # Transformaciones en variables
