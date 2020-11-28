@@ -5,6 +5,9 @@ Víctor Juez, Arturo Menchaca
 
 Noviembre 22, 2020
 
+  - Enunciado: [P1a.pdf](./P1a.pdf)
+  - Script resultado: [script\_p1a.R](./script_p1a.R)
+
 ### Índice
 
   - [Conjunto de datos](#conjunto-de-datos)
