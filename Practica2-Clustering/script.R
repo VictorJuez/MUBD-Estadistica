@@ -434,7 +434,7 @@ sum(diag(t3))/sum(t3)                                   # porcentaje de acierto
 #
 #-----------------------------------------------------------
 set.seed(12345)
-rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=50,do.trace=TRUE)  
+rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=500,do.trace=TRUE)  
 rf.mod
 pred.rf <- predict(rf.mod,test)
 (t <- table(pred.rf,test$activity))                         # tabla de predicciones vs respuesta real
@@ -493,11 +493,6 @@ sum(diag(t))/sum(t)
 #
 #-----------------------------------------------------------
 
-############################################################
-# Escoger solo 4000 registros
-# Transformar para solo tener 2 clases
-# Dividir la muestra 50/50
-############################################################
 ##-- Dividir en muestra de entrenamiento y muestra test (iguales)
 p <- 0.5
 set.seed(12345)
@@ -587,14 +582,51 @@ t <- table(pr,test$activity2)
 t
 sum(diag(t))/sum(t)
 
+######## all classes
+##-- 1. Mejora la capacidad predictiva en la clasificacion de todas las clases usando la funcion "tune" 
+## (Prueba con un numero ligeramente mayor de filas)
+p <- 0.5
+set.seed(12345)
+n0 <- 4000
+sel <- sample(1:nrow(d),n0)
+d1 <- d[sel,]
+train.sel <- sample(c(FALSE,TRUE),n0,rep=TRUE,prob=c(1-p,p))
+train <- d1[train.sel,]
+test <- d1[!train.sel,]
+
+## Generacion modelo
+mod.svm <- svm(activity~.,data = train,cost=1)
+
+## Capacidad predictiva
+pr <- predict(mod.svm,test)
+t <- table(pr,test$activity)
+sum(diag(t))/sum(t)
+t
+
+
+## Tunear modelo
+mod.tune <- tune(svm,activity~.,data=train,kernel="linear",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
+summary(mod.tune)
+mod.tune$best.parameters
+
+##-- Escoger el mejor modelo
+mod.best <- mod.tune$best.model
+summary(mod.best)
+
+## Capacidad predictiva
+pr <- predict(mod.best,test)
+t <- table(pr,test$activity)
+sum(diag(t))/sum(t)
+t
+
 
 #### FINAL PREDICT
 datosTest <- read.table('Datos Test.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
 datosTest$subject = NULL
-pr <- predict(rf.mod1,datosTest)
+pr <- predict(mod.best,datosTest)
 
 nombre_objeto <- data.frame(activity=pr) # pr: predicciones 
-write.table(nombre_objeto, 'p2.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
+write.table(nombre_objeto, 'p2_svm.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
 
 ########################################################################################################################
 ########################################################################################################################
