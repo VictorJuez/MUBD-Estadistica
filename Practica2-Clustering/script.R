@@ -28,10 +28,6 @@ datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.'
 datos2 = datos;
 datos2$subject = NULL;
 datos2$activity = NULL;
-datos2 = scale(datos2)
-
-summary(datos)
-head(datos)
 
 ## Regla del codo
 VE <- c()
@@ -40,20 +36,16 @@ for (k in 1:10){
   VE[k] <- km$betweenss/km$totss       
 }
 plot(VE,type="b",pch=19,xlab="Numero de grupos",ylab="Variabilidad explicada")
-## K = 3
+round(VE, 2)
+## K = 2
 
 
 ## ACP
-#missing(datos)
-#cor(datos)
-cli = prcomp(datos2, scale=TRUE, center=TRUE)
-#plot(cli)
-principales = cli$x
-principales = principales[,1:50]
+pr.comp <- princomp(datos2)
 
 # Analisi de clusters
 set.seed(12345)
-ncluster = NbClust(datos2, min.nc=2, max.nc=10, method="kmeans")
+ncluster = NbClust(pr.comp$scores[1:500, 1:10], min.nc=2, max.nc=10, method="kmeans")
 ncluster
 par(mfrow=c(1,1))
 barplot(table(ncluster$Best.n[1,]))
@@ -64,52 +56,33 @@ barplot(table(ncluster$Best.n[1,]))
 # Representacion grafica
 ############################################################
 ##-- 2 grupos
-km2 <- kmeans(datos2,centers=2,nstart=10)
-ve2 <- km2$betweenss/km2$totss
+km <- kmeans(datos2,centers=2,nstart=10)
+ve <- km$betweenss/km$totss
 
 ##-- En las 2 primeras componentes
-pr.comp <- princomp(datos2)
 x <- pr.comp$scores[,1]
 y <- pr.comp$scores[,2]
-plot(x,y,pch=19,col=km2$cluster)
+plot(x,y,pch=19,col=km$cluster)
 
 ## Vemos en el grafico que la particion en dos clusters es coherente, a simple vista no se identifican mas de estos dos clusteres
 
-##-- 3 grupos
-km3 <- kmeans(datos2,centers=3,nstart=10)
-ve3 <- km3$betweenss/km3$totss
-
-##-- En las 2 primeras componentes
-pr.comp <- princomp(datos2)
-x <- pr.comp$scores[,1]
-y <- pr.comp$scores[,2]
-plot(x,y,pch=19,col=km3$cluster)
-
-## -- 4 grupos
-km4 <- kmeans(datos2,centers=4,nstart=10)
-
-## -- 6 grupos (solo para verificar con enunciado)
+##-- 6 grupos (Para comparar con las actividades)
 km6 <- kmeans(datos2,centers=6,nstart=10)
+ve6 <- km6$betweenss/km6$totss
 
 ##-- En las 2 primeras componentes
-pr.comp <- princomp(datos2)
 x <- pr.comp$scores[,1]
 y <- pr.comp$scores[,2]
-plot(x,y,pch=19,col=km4$cluster)
-
-# Nos quedamos con 3 clusters
+plot(x,y,pch=19,col=km6$cluster)
 
 ############################################################
 # Similitud con etiquetas iniciales
 ############################################################
-randIndex(table(km2$cluster,datos$activity))
+randIndex(table(km$cluster,datos$activity))
 # Observamos un valor bajo, esto se debe a que la variable activity realmente consta de 6 categorias distintas de actividad y nosotros solo hemos sido capaces de identificar dos clusteres dado el conjunto de datos
 # Entonces solo somos capaces de discernir dos categorias mientras deberiamos discernir 6
 
-
-
 ### PARTE 2
-
 ###### KNN
 library(deldir)
 library(kknn)
