@@ -42,6 +42,7 @@ round(VE, 2)
 
 ## ACP
 pr.comp <- princomp(datos2)
+screeplot(pr.comp,type='lines')
 
 # Analisi de clusters
 set.seed(12345)
@@ -91,19 +92,9 @@ library(class)
 ############################################################
 # Leer e inspeccionar los datos
 ############################################################
-d0 = read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.')
-dim(d0)
-summary(d0)
-
-############################################################
-# Eliminar variables irrelevantes y transformar algunas
-############################################################
-d = d0
+d = read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
 d$subject = NULL
 
-############################################################
-# Dividir la muestra
-############################################################
 ##-- Dividir en muestra de entrenamiento y muestra test
 p <- 0.7                 # Proporcion en muestra de entrenamiento
 n <- dim(d)[1]           # numero de observaciones 
@@ -115,21 +106,11 @@ test <- d[!train.sel,]
 ############################################################
 # Comparar capacidad predictiva 
 ############################################################
-##-- 1-NN Train + Test
-knn1 <- knn(train[,-ncol(d)], test=test[,-ncol(d)], cl=train$activity, k = 1)
-t <- table(knn1,test$activity)
-t
-sum(diag(t))/sum(t)
-
 ##-- 1-NN Cross-validation
 knn2 <- knn.cv(d[,-ncol(d)], cl=d$activity, k = 1)
 t <- table(knn2,d$activity)
 sum(diag(t))/sum(t)
 ## TODO: que validamos?
-
-##-- Opcion Naive (Asignar a la categoria mayoritaria)
-table(test$activity)
-max(prop.table(table(test$activity)))
 
 ############################################################
 # Numero de grupos
@@ -144,59 +125,14 @@ for(k in K){
 }
 plot(K,p,pch=19,type='b')
 cbind(K,p)
-## K = 3 da el mejor resultado
-
-############################################################
-# K = 3
-############################################################
-##-- 1-NN Train + Test
-knn1 <- knn(train[,-ncol(d)], test=test[,-ncol(d)], cl=train$activity, k = 3, l=2)
-t <- table(knn1,test$activity)
-t
-sum(diag(t))/sum(t)
-## KNN k=3 => 0.9622016
-## KNN k=3 l=2 => 0.9628401
-## KNN k=3 l=3 => 0.9930982
-
-##-- 1-NN Cross-validation
-knn2 <- knn.cv(d[,-ncol(d)], cl=d$activity, k = 3)
-t <- table(knn2,d$activity)
-sum(diag(t))/sum(t)
-
-## Predict results
-datosTest <- read.table('Datos Test.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
-datosTest$subject = NULL
-pr <- knn(d[,-ncol(d)], test=datosTest, cl=d$activity, k = 3)
-pr2 <- knn(d[,-ncol(d)], test=datosTest, cl=d$activity, k = 3)
-pr3 = pr
-## KNN3 96% acierto
-## KNN3L3 95.85
-
-totalNulls = 0
-for (i in 1:length(pr3)) {
-  x = pr3[i]
-  if (is.na(x)) {
-    totalNulls = totalNulls+1
-    pr3[i] = pr2[i]
-  }
-}
-
-t <- table(pr3,test$activity)
-t
-sum(diag(t))/sum(t)
-
-nombre_objeto <- data.frame(activity=pr3) # pr: predicciones 
-write.table(nombre_objeto, 'p2_knn3.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
-
+## K = 3 da el mejor resultado => 0.9622016
 
 ############################################################
 # Usar ACP --> Reduccion dimensionalidad previo a KNN
 ############################################################
-res.acp0 <- princomp(d[,-ncol(d)])
-screeplot(res.acp0,type='lines')
-res.acp <- res.acp0$scores[,1]
-train2 <- data.frame(c1=res.acp[train.sel])
-test2 <- data.frame(c1=res.acp[!train.sel])
+res.acp <- pr.comp$scores[,1:50]
+train2 <- res.acp[train.sel,]
+test2 <- res.acp[!train.sel,]
 
 
 K <- seq(1,21,2)
@@ -210,24 +146,19 @@ for(k in K){
 plot(K,p,pch=19,type='b')
 cbind(K,p)
 
-##-- 1-NN
-knn1 <- knn(train2, test2, cl=train$activity, k = 3)
-t <- table(knn1,test$activity)
-t
-sum(diag(t))/sum(t)
-## RESULTADOS MUY MALOS, NO NOS SIRVE
+## Mejor resultado con k = 7 => 0.9429708 ==> NO MEJORA
 
 ############################################################
-# Anyadir un minimo de votos (parametro l)
+# Anyadir un minimo de votos (parametro l) => Out of scope
 ############################################################
-knn2 <- knn(train2, test2, cl=train$activity, l=2, k = 2)
-t <- table(knn2,test$activity)
-sum(diag(t))/sum(t)
-tmiss <- table(knn2,test$activity,useNA = 'always')
-tmiss
+# knn2 <- knn(train2, test2, cl=train$activity, l=2, k = 2)
+# t <- table(knn2,test$activity)
+# sum(diag(t))/sum(t)
+# tmiss <- table(knn2,test$activity,useNA = 'always')
+# tmiss
 
 ############################################################
-# Kernel
+# Kernel KNN
 ############################################################
 p <- c()
 K <- seq(1,21,2)
@@ -239,72 +170,24 @@ for(k in K){
 }
 plot(K,p,pch=19,type='b')
 cbind(K,p)
-## Maximum 0.9522546
-
-#### PRUEBAS
-kknn1 <- kknn(factor(activity)~., train, test,k=15)
-fit <- fitted(kknn1)
-t <- table(fit,test$activity)
-sum(diag(t))/sum(t)   
-## KKNN k=3 => 0.9436340
-## KKNN k=15 => 0.9522546
-
-kknn <- kknn(factor(activity)~., d, datosTest,k=3)
-fit = fitted(kknn)
-saveResult(fit, 'kknn3.txt')
-## KKNN k=3 => 95.25
-## KKNN k=15 => 95.45
-
-##-- Con ACP --> NO mejora
-kknn3 <- kknn(factor(train$activity)~., train2, test2,k=15)
-fit <- fitted(kknn3)
-t <- table(fit,test$activity)
-sum(diag(t))/sum(t)
+## Maximum k=15 => 0.9522546 ==> NO mejora
 
 ############################################################
 #
 # Naive Bayes
 #
 ############################################################
-
-############################################################
-# Cargar paquetes
-############################################################
 library(e1071)
 library(ineq)
 
 ############################################################
-# Leer datos
-############################################################
-datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
-
-############################################################
-# Inspeccionar datos
-############################################################
-dim(datos)                                 # Dimension
-summary(datos)                             # Descriptiva
-table(apply(apply(datos,2,is.na),2,sum))   # Tabla con numero de missings
-
-############################################################
 # Premisa de independencia
 ############################################################
-cor.matrix <- cor(datos[,-c(1,length(datos))])              # Matriz de correlaciones
+cor.matrix <- cor(d[,-c(1,length(d))])              # Matriz de correlaciones
 cor.num <- as.numeric(cor.matrix)                           # Todas las correlaciones en un vector
 t.cor <- table(cut(cor.num[cor.num!=1],br=seq(-1,1,0.1)))/2 # Categorazion de las correlaciones en intervalos de 0.1
 t.cor
 barplot(t.cor)
-
-############################################################
-# Dividir la muestra
-############################################################
-d = datos
-d$subject = NULL
-p <- 0.7                                   # Proporcion en muestra de entrenamiento
-n <- nrow(d)                               # Numero de observaciones 
-set.seed(12345)
-train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
-train <- d[train.sel,]
-test <- d[!train.sel,]
 
 ############################################################
 # Aplicar bayes
@@ -325,11 +208,6 @@ p.acierto <- sum(diag(t))/sum(t)
 p.acierto
 # 0.8023873
 
-##-- Se pueden pedir las probabilidades de cada clase para inspecci?n visual
-preds2 <- predict(nb, newdata = test,type = "raw")
-head(preds2)
-heatmap(preds2[1:50,],Rowv=NA,Colv=NA,col = cm.colors(256))
-
 ##-- Proporcion de acierto por clase
 barplot(diag(prop.table(t,2)))
 
@@ -343,13 +221,7 @@ var.imp <- c()                  # Gini
 
 ##-- Calcular indice y graficar distribucion
 for (i in 1:(ncol(d)-1)){
-  ##-- Crear ventana grafica cada 9 graficos
-  if((i-1) %% 9==0){
-    par(mfrow=c(3,3))
-  }
-  
   x <- nbt[[i]][,1]
-  barplot(x,main=names(d)[i])  # grafico
   var.imp[i] <- ineq(x)        # GINI         
 }
 
@@ -378,9 +250,9 @@ sel.pr <- which(var.imp>0.5)
 train1 <- train[,c(paste0('feat',sel.pr),'activity')]
 
 ##-- Aplicar bayes nuevamente
-nb1 <- naiveBayes(activity ~ ., train1, type='class')
-preds <- predict(nb1, newdata = test)
-t <- table(preds, test$activity)
+nb1 <- naiveBayes(activity ~ ., train1)
+preds1 <- predict(nb1, newdata = test)
+t <- table(preds1, test$activity)
 p.acierto1 <- sum(diag(t))/sum(t)
 p.acierto1
 # 0.8322281
@@ -416,38 +288,6 @@ t <- table(preds, test$activity)
 p.acierto3 <- sum(diag(t))/sum(t)
 p.acierto3
 # 0.8083554
-
-##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
-##### IGNORADO! DEMASIADO TIEMPO DE EJECUCION
-##-- Sistema 3: R2 --> No mejora (0.57) --> Muy costoso.
-R2.max <- 0.5
-d <- train[,-94]
-ite <- 1
-while(R2.max>=0.5){
-  p <- ncol(d)
-  R2 <- c()
-  for(i in 1:p){
-    res <- names(d)[i]
-    mod.lm <- lm(as.formula(paste(res,'~.')),d)
-    s.mod.lm <- summary(mod.lm)
-    R2[i] <- s.mod.lm$r.squared
-    cat('Iteration:',ite,'Model:',i,'R2:',R2[i],'\n')
-  }
-  R2.max <- max(R2)
-  d <- d[,-which.max(R2)]
-  
-  ite <- ite + 1
-}
-
-##-- Aplicar bayes nuevamente
-train4 <- d
-train4$target <- train$target
-test4 <- test[,names(train4)]
-nb4 <- naiveBayes(target ~ ., train4, type="class")
-preds <- predict(nb4, newdata = test4)
-t <- table(preds, test$target)
-p.acierto4 <- sum(diag(t))/sum(t)
-p.acierto4
 
 #-----------------------------------------------------------
 #
