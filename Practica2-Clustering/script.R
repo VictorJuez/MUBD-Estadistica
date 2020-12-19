@@ -7,9 +7,23 @@ library(kernlab)        # kkmeans
 library(clValid)        # clValid
 library(cluster)        # pam
 library(Amelia)
+##################################
+saveResult = function(result, fileName) {
+  nombre_objeto <- data.frame(activity=result) # pr: predicciones 
+  write.table(nombre_objeto, fileName, row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
+}
+
+getD = function() {
+  datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
+  d = datos
+  d$subject = NULL
+  return(d)
+}
+
+#################################
 
 datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.')
-datos = datos[1:600,]
+#datos = datos[1:600,]
 
 datos2 = datos;
 datos2$subject = NULL;
@@ -39,7 +53,7 @@ principales = principales[,1:50]
 
 # Analisi de clusters
 set.seed(12345)
-ncluster = NbClust(principales, min.nc=2, max.nc=10, method="kmeans")
+ncluster = NbClust(datos2, min.nc=2, max.nc=10, method="kmeans")
 ncluster
 par(mfrow=c(1,1))
 barplot(table(ncluster$Best.n[1,]))
@@ -58,6 +72,8 @@ pr.comp <- princomp(datos2)
 x <- pr.comp$scores[,1]
 y <- pr.comp$scores[,2]
 plot(x,y,pch=19,col=km2$cluster)
+
+## Vemos en el grafico que la particion en dos clusters es coherente, a simple vista no se identifican mas de estos dos clusteres
 
 ##-- 3 grupos
 km3 <- kmeans(datos2,centers=3,nstart=10)
@@ -87,6 +103,8 @@ plot(x,y,pch=19,col=km4$cluster)
 # Similitud con etiquetas iniciales
 ############################################################
 randIndex(table(km2$cluster,datos$activity))
+# Observamos un valor bajo, esto se debe a que la variable activity realmente consta de 6 categorias distintas de actividad y nosotros solo hemos sido capaces de identificar dos clusteres dado el conjunto de datos
+# Entonces solo somos capaces de discernir dos categorias mientras deberiamos discernir 6
 
 
 
@@ -134,6 +152,7 @@ sum(diag(t))/sum(t)
 knn2 <- knn.cv(d[,-ncol(d)], cl=d$activity, k = 1)
 t <- table(knn2,d$activity)
 sum(diag(t))/sum(t)
+## TODO: que validamos?
 
 ##-- Opcion Naive (Asignar a la categoria mayoritaria)
 table(test$activity)
@@ -152,6 +171,50 @@ for(k in K){
 }
 plot(K,p,pch=19,type='b')
 cbind(K,p)
+## K = 3 da el mejor resultado
+
+############################################################
+# K = 3
+############################################################
+##-- 1-NN Train + Test
+knn1 <- knn(train[,-ncol(d)], test=test[,-ncol(d)], cl=train$activity, k = 3, l=2)
+t <- table(knn1,test$activity)
+t
+sum(diag(t))/sum(t)
+## KNN k=3 => 0.9622016
+## KNN k=3 l=2 => 0.9628401
+## KNN k=3 l=3 => 0.9930982
+
+##-- 1-NN Cross-validation
+knn2 <- knn.cv(d[,-ncol(d)], cl=d$activity, k = 3)
+t <- table(knn2,d$activity)
+sum(diag(t))/sum(t)
+
+## Predict results
+datosTest <- read.table('Datos Test.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
+datosTest$subject = NULL
+pr <- knn(d[,-ncol(d)], test=datosTest, cl=d$activity, k = 3)
+pr2 <- knn(d[,-ncol(d)], test=datosTest, cl=d$activity, k = 3)
+pr3 = pr
+## KNN3 96% acierto
+## KNN3L3 95.85
+
+totalNulls = 0
+for (i in 1:length(pr3)) {
+  x = pr3[i]
+  if (is.na(x)) {
+    totalNulls = totalNulls+1
+    pr3[i] = pr2[i]
+  }
+}
+
+t <- table(pr3,test$activity)
+t
+sum(diag(t))/sum(t)
+
+nombre_objeto <- data.frame(activity=pr3) # pr: predicciones 
+write.table(nombre_objeto, 'p2_knn3.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
+
 
 ############################################################
 # Usar ACP --> Reduccion dimensionalidad previo a KNN
@@ -175,10 +238,11 @@ plot(K,p,pch=19,type='b')
 cbind(K,p)
 
 ##-- 1-NN
-knn1 <- knn(train2, test2, cl=train$activity, k = 1)
+knn1 <- knn(train2, test2, cl=train$activity, k = 3)
 t <- table(knn1,test$activity)
 t
 sum(diag(t))/sum(t)
+## RESULTADOS MUY MALOS, NO NOS SIRVE
 
 ############################################################
 # Anyadir un minimo de votos (parametro l)
@@ -192,12 +256,6 @@ tmiss
 ############################################################
 # Kernel
 ############################################################
-##-- Con datos originales
-kknn1 <- kknn(factor(activity)~., train, test,k=1)
-fit <- fitted(kknn1)
-t <- table(fit,test$activity)
-sum(diag(t))/sum(t)     
-
 p <- c()
 K <- seq(1,21,2)
 for(k in K){
@@ -208,22 +266,27 @@ for(k in K){
 }
 plot(K,p,pch=19,type='b')
 cbind(K,p)
+## Maximum 0.9522546
+
+#### PRUEBAS
+kknn1 <- kknn(factor(activity)~., train, test,k=15)
+fit <- fitted(kknn1)
+t <- table(fit,test$activity)
+sum(diag(t))/sum(t)   
+## KKNN k=3 => 0.9436340
+## KKNN k=15 => 0.9522546
+
+kknn <- kknn(factor(activity)~., d, datosTest,k=3)
+fit = fitted(kknn)
+saveResult(fit, 'kknn3.txt')
+## KKNN k=3 => 95.25
+## KKNN k=15 => 95.45
 
 ##-- Con ACP --> NO mejora
-kknn3 <- kknn(factor(train$activity)~., train2, test2,k=2)
+kknn3 <- kknn(factor(train$activity)~., train2, test2,k=15)
 fit <- fitted(kknn3)
 t <- table(fit,test$activity)
 sum(diag(t))/sum(t)
-
-K <- seq(1,21,2)
-for(k in K){
-  cat('Iteration:',k,'of',max(K),'\n')
-  kknn <- kknn(factor(train$activity)~., train2, test2,k=k)
-  t <- table(fitted(kknn),test$activity)
-  p[(k+1)/2] <- sum(diag(t))/sum(t)
-}
-plot(K,p,pch=19,type='b')
-cbind(K,p)
 
 ############################################################
 #
@@ -287,6 +350,7 @@ t <- table(preds, test$activity)
 t
 p.acierto <- sum(diag(t))/sum(t)
 p.acierto
+# 0.8023873
 
 ##-- Se pueden pedir las probabilidades de cada clase para inspecci?n visual
 preds2 <- predict(nb, newdata = test,type = "raw")
@@ -346,8 +410,71 @@ preds <- predict(nb1, newdata = test)
 t <- table(preds, test$activity)
 p.acierto1 <- sum(diag(t))/sum(t)
 p.acierto1
+# 0.8322281
 
-# TODO: INTENTO DE MEJORA 2 
+############################################################
+# Intento de mejora 2: Quitar variables correlacionadas
+############################################################
+##-- Sistema 1: Correlaciones grandes
+high.corr <- which(cor.matrix>0.8,arr.ind = TRUE)
+t.high.corr <- sort(table(as.numeric(high.corr))/2,decreasing=TRUE)
+t.high.corr
+sel.rm <- names(t.high.corr)[t.high.corr>=2] 
+train2 <- train[,-which(names(train) %in% paste0('feat',sel.rm))]
+
+##-- Aplicar bayes nuevamente
+nb2 <- naiveBayes(activity ~ ., train2, type="class")
+preds <- predict(nb2, newdata = test)
+t <- table(preds, test$activity)
+p.acierto2 <- sum(diag(t))/sum(t)
+p.acierto2
+# 0.7758621
+
+##-- Sistema 2: Suma de correlaciones
+cor.sum <- sort(apply(cor.matrix,2,sum),decreasing=TRUE)
+cor.sum
+sel.rm <- names(cor.sum)[1:30]
+train3 <- train[,-which(names(train) %in% sel.rm)]
+
+##-- Aplicar bayes nuevamente
+nb3 <- naiveBayes(activity ~ ., train3, type="class")
+preds <- predict(nb3, newdata = test)
+t <- table(preds, test$activity)
+p.acierto3 <- sum(diag(t))/sum(t)
+p.acierto3
+# 0.8083554
+
+##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### ##### 
+##### IGNORADO! DEMASIADO TIEMPO DE EJECUCION
+##-- Sistema 3: R2 --> No mejora (0.57) --> Muy costoso.
+R2.max <- 0.5
+d <- train[,-94]
+ite <- 1
+while(R2.max>=0.5){
+  p <- ncol(d)
+  R2 <- c()
+  for(i in 1:p){
+    res <- names(d)[i]
+    mod.lm <- lm(as.formula(paste(res,'~.')),d)
+    s.mod.lm <- summary(mod.lm)
+    R2[i] <- s.mod.lm$r.squared
+    cat('Iteration:',ite,'Model:',i,'R2:',R2[i],'\n')
+  }
+  R2.max <- max(R2)
+  d <- d[,-which.max(R2)]
+  
+  ite <- ite + 1
+}
+
+##-- Aplicar bayes nuevamente
+train4 <- d
+train4$target <- train$target
+test4 <- test[,names(train4)]
+nb4 <- naiveBayes(target ~ ., train4, type="class")
+preds <- predict(nb4, newdata = test4)
+t <- table(preds, test$target)
+p.acierto4 <- sum(diag(t))/sum(t)
+p.acierto4
 
 #-----------------------------------------------------------
 #
@@ -374,7 +501,7 @@ test <- d[!train.sel,]
 # Visualizacion
 ############################################################
 ##-- Construirlo
-ct.mod <- ctree(activity ~ ., train,controls=ctree_control(maxdepth=3)) # Poco profundo para poder graficarlo
+ct.mod <- ctree(activity ~ ., train,controls=ctree_control(maxdepth=2)) # Poco profundo para poder graficarlo
 
 ##-- Visualizarlo
 plot(ct.mod,type='extended')
@@ -383,10 +510,11 @@ plot(ct.mod,type='simple')
 ############################################################
 # Evaluar capacidad predictiva
 ############################################################
-ct.mod <- ctree(activity ~ ., train,controls=ctree_control(maxdepth=0)) # Profundidad maxima
+ct.mod <- ctree(activity ~ ., train) # Profundidad maxima
 pred <- predict(ct.mod,test,type="response")                          # prediccion de la respuesta
 (t <- table(pred,test$activity))                                        # tabla de predicciones vs respuesta real
 sum(diag(t))/sum(t)
+# 0.8885942
 
 ############################################################
 # Capacidad predictiva por clase
@@ -411,6 +539,7 @@ ct.mod2 <- nodeprune(ct.mod, ids = iid[log(pval,10) > -95])
 pred2 <- predict(ct.mod2,test,type="response")                                       
 (t2 <- table(pred2,test$activity))                                                     
 sum(diag(t2))/sum(t2) 
+# 0.8580902 - NO MEJORA
 
 table(pred2,test$activity,useNA='alw')
 
@@ -426,7 +555,7 @@ plot(ct.prune); text(ct.prune,pretty =0)                # arbol podado
 pred3 <- predict (ct.prune ,test ,type="class")         # prediccion
 t3 <- table(pred3,test$activity)                          # tabla de confusion 
 sum(diag(t3))/sum(t3)                                   # porcentaje de acierto 
-
+# 0.882626
 
 #-----------------------------------------------------------
 #
@@ -438,7 +567,8 @@ rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=500,do.trace=TRUE)
 rf.mod
 pred.rf <- predict(rf.mod,test)
 (t <- table(pred.rf,test$activity))                         # tabla de predicciones vs respuesta real
-sum(diag(t))/sum(t)    
+sum(diag(t))/sum(t)
+# 0.9602122
 
 ############################################################
 # Es necesario el conjunto de entrenamiento?
@@ -478,14 +608,13 @@ v.imp0[ord,c('walk')]
 ############################################################
 # "Tunear" el parametro mtry
 ############################################################
-mtry.par <- tuneRF(d[,1:93],d$activity)
+mtry.par <- tuneRF(d,d$activity)
 set.seed(12345)
-rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=50,do.trace=TRUE,mtry=18)
+rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=200,do.trace=TRUE,mtry=184)
 pred.rf1 <- predict(rf.mod1,test)
 (t <- table(pred.rf1,test$activity))                        
 sum(diag(t))/sum(t)   
 
-## TODO: Ajustar random forest con mas arboles 500
 
 #-----------------------------------------------------------
 #
@@ -585,14 +714,12 @@ sum(diag(t))/sum(t)
 ######## all classes
 ##-- 1. Mejora la capacidad predictiva en la clasificacion de todas las clases usando la funcion "tune" 
 ## (Prueba con un numero ligeramente mayor de filas)
+d = getD()
 p <- 0.5
 set.seed(12345)
-n0 <- 4000
-sel <- sample(1:nrow(d),n0)
-d1 <- d[sel,]
-train.sel <- sample(c(FALSE,TRUE),n0,rep=TRUE,prob=c(1-p,p))
-train <- d1[train.sel,]
-test <- d1[!train.sel,]
+train.sel <- sample(c(FALSE,TRUE),nrow(d),rep=TRUE,prob=c(1-p,p))
+test <- d[train.sel,]
+train <- d[!train.sel,]
 
 ## Generacion modelo
 mod.svm <- svm(activity~.,data = train,cost=1)
@@ -617,16 +744,54 @@ summary(mod.best)
 pr <- predict(mod.best,test)
 t <- table(pr,test$activity)
 sum(diag(t))/sum(t)
+# 0.9798658
 t
+
+############################################################
+# Que kernel escoger?
+############################################################
+mod.tune2 <- tune(svm,activity~.,
+                  data = train,
+                  ranges = list(kernel = c('linear','polynomial','radial','sigmoid'),
+                                cost = c(0.01,0.2,0.1,1,5,10,100)))
+summary(mod.tune2)
+mod.best <- mod.tune2$best.model
+
+
+############################################################
+# Capacidad predictiva
+############################################################
+pr <- predict(mod.best,test)
+t <- table(pr,test$activity)
+t
+sum(diag(t))/sum(t)
+# 0.9790762
+
+## Modelo manual
+mod.svm <- svm(activity~.,data = train, cost=10, kernel='linear')
+
+pr <- predict(mod.svm,test)
+t <- table(pr,test$activity)
+sum(diag(t))/sum(t)
+# d kernel = radial cost = 10 => 0.9988
+# d kernel = linear cost = 10 => 0.9948
+# d kernel = radial cost = 15 => 0.9992
+
+# train kernel = radial cost = 10 => 0.984739 
+# cost = 15 => 0.9839357
+# cost = 5 => 0.9831325
+
+
+mod.tune <- tune(svm,activity~.,data=train,kernel="radial",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
 
 
 #### FINAL PREDICT
 datosTest <- read.table('Datos Test.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
 datosTest$subject = NULL
-pr <- predict(mod.best,datosTest)
+pr <- predict(mod.svm,datosTest)
 
 nombre_objeto <- data.frame(activity=pr) # pr: predicciones 
-write.table(nombre_objeto, 'p2_svm.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
+write.table(nombre_objeto, 'svm_radial_15.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
 
 ########################################################################################################################
 ########################################################################################################################
