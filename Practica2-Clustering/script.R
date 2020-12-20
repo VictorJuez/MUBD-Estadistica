@@ -69,8 +69,13 @@ randIndex(table(km$cluster,datos$activity))
 # Observamos un valor bajo, esto se debe a que la variable activity realmente consta de 6 categorias distintas de actividad y nosotros solo hemos sido capaces de identificar dos clusteres dado el conjunto de datos
 # Entonces solo somos capaces de discernir dos categorias mientras deberiamos discernir 6
 
-### PARTE 2
-###### KNN
+########################################################################################################################
+#                                             PARTE 2 - CLUSTERING SUPERVISADO
+########################################################################################################################
+
+############################################################
+# KNN
+############################################################
 library(deldir)
 library(kknn)
 library(class)
@@ -128,7 +133,7 @@ cbind(K,p)
 ## Mejor resultado con k = 7 => 0.9429708 ==> NO MEJORA
 
 ############################################################
-# Anyadir un minimo de votos (parametro l) => Out of scope
+# Anyadir un minimo de votos (parametro l) => Omitimos, genera nulls
 ############################################################
 # knn2 <- knn(train2, test2, cl=train$activity, l=2, k = 2)
 # t <- table(knn2,test$activity)
@@ -374,6 +379,7 @@ round(prop.table(t2,1),2)
 # Necesitamos mas arboles?
 ############################################################
 plot(rf.mod, type="l")
+# No, ya vemos estabilizados los errores
 
 ############################################################
 # Importancia de las variables --> Interpretabilidad
@@ -394,11 +400,11 @@ v.imp0[ord,c('walk')]
 ############################################################
 mtry.par <- tuneRF(d,d$activity)
 set.seed(12345)
-rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=200,do.trace=TRUE,mtry=92)
+rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=100,do.trace=TRUE,mtry=92)
 pred.rf1 <- predict(rf.mod1,test)
 (t <- table(pred.rf1,test$activity))                        
 sum(diag(t))/sum(t)   
-# 0.9496021 -> No mejora
+# 0.9502653 -> No mejora
 
 ## Guardamos el mejor resultado de Conditional Trees
 allPredictions$prediction.capacity[4] = p.acierto
@@ -425,8 +431,9 @@ mod.tune <- tune(svm,activity~.,
                   ranges = list(kernel = c('linear','polynomial','radial','sigmoid'),
                                 cost = c(0.01,0.2,0.1,1,5,10,100)))
 summary(mod.tune)
+mod.tune$best.parameters
 # Best parameters: Kernel = radial, cost = 10
-# best performance: 0.0814 
+# best performance: 0.0844 
 
 ############################################################
 # Capacidad predictiva
