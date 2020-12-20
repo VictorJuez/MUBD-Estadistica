@@ -7,20 +7,6 @@ library(kernlab)        # kkmeans
 library(clValid)        # clValid
 library(cluster)        # pam
 library(Amelia)
-##################################
-saveResult = function(result, fileName) {
-  nombre_objeto <- data.frame(activity=result) # pr: predicciones 
-  write.table(nombre_objeto, fileName, row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
-}
-
-getD = function() {
-  datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
-  d = datos
-  d$subject = NULL
-  return(d)
-}
-
-#################################
 
 datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.')
 
@@ -39,7 +25,8 @@ round(VE, 2)
 ## K = 2
 
 
-## ACP
+## ACP previo al análisi de clusters NbClust. 
+# Se hace debido al alto coste computacional de la funcion
 pr.comp <- princomp(datos2)
 screeplot(pr.comp,type='lines')
 
@@ -344,7 +331,7 @@ cv.tr <- cv.tree(tr, FUN = prune.misclass)
 plot(cv.tr)
 
 # Modelo podado
-ct.prune <- prune.misclass (tr ,best = 10)              # modelo
+ct.prune <- prune.misclass (tr ,best = 8)              # modelo
 plot(ct.prune); text(ct.prune,pretty =0)                # arbol podado
 pred3 <- predict (ct.prune ,test ,type="class")         # prediccion
 t3 <- table(pred3,test$activity)                          # tabla de confusion 

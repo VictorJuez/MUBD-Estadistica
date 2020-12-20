@@ -8,7 +8,21 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=FALSE, 
+                      cache=TRUE, 
+                      results=FALSE, 
+                      message=FALSE, 
+                      warning=FALSE)
+
+library(scatterplot3d)  
+library(flexclust)
+library(NbClust)        # NbClust
+library(cluster)
+library(factoextra)     # fviz_***
+library(kernlab)        # kkmeans
+library(clValid)        # clValid
+library(cluster)        # pam
+library(Amelia)
 ```
 
 # Introducción
@@ -25,12 +39,11 @@ Para identificar el número de clústers hemos utilizado el K-means. Sabemos que
 ## Regla del codo
 Ejecutamos el k-means 10 veces utilizando de 1 a 10 clústeres respectivamente, y por cada resultado comparamos la variabilidad explicada.
 
-```{r echo=FALSE, cache=TRUE}
+```{r}
 datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.')
 datos2 = datos;
 datos2$subject = NULL;
 datos2$activity = NULL;
-datos2 = scale(datos2)
 
 VE <- c()
 for (k in 1:10){
@@ -59,19 +72,37 @@ Aunque la variabilidad explicada sí que va aumentando a medida que se increment
 
 
 ## NbClust
-La librería NbClust utiliza 30 índices diferentes variando por cada uno todas las combinaciones de número de clústers, tipo de distancias y métodos de clusterización para determinar el número de clústers que más encaja al conjunto de datos. El resultado obtenido tras la ejecución es el siguiente:
+La librería NbClust utiliza 30 índices diferentes variando por cada uno todas las combinaciones de número de clústers, tipo de distancias y métodos de clusterización para determinar el número de clústers que más encaja al conjunto de datos. 
 
-- 14 índices proponen 2 como el mejor número de clústers.
-- 2 índices proponen 3 como el mejor número de clústers.
-- 5 índices proponen 4 como el mejor número de clústers.
-- 1 índice propone 8 como el mejor número de clústers.
+El coste computacional de esta operción es bastante elevado, y por este motivo hemos reducido la dimensionalidad del conjunto de datos de la siguiente manera:
 
-Por mayoría, el mejor número de clústers es 2.
+- Principal Component Analysis (PCA): Nos hemos quedado con las 10 componentes principales en vez de utilizar las más de 500 características que tienen el conjunto de datos.
+- Reducción de observaciones: Hemos utilzado 500 observaciones en vez de las aproximadamente 5000 que hay en el conjunto de datos.
 
-## Análisis del resultado
-Para representar gráficamente los clústers, hemos hecho un análisis de componentes principales (PCA), con el que hemos extraído los dos componentes más significativos. Éstos van a formar el eje X e Y respectivamente, y sobre ellos mostramos el conjunto de datos marcados con colores distintos para representar el clúster al que pertenecen.
+El resultado obtenido tras la ejecución es el siguiente:
 
-```{r echo=FALSE, cache=TRUE}
+```{r fig.show='hide'}
+## ACP previo al análisi de clusters NbClust. 
+# Se hace debido al alto coste computacional de la funcion
+pr.comp <- princomp(datos2)
+#screeplot(pr.comp,type='lines')
+
+# Analisi de clusters
+set.seed(12345)
+ncluster = NbClust(pr.comp$scores[1:500, 1:10], min.nc=2, max.nc=10, method="kmeans")
+```
+
+```{r}
+par(mfrow=c(1,1))
+barplot(table(ncluster$Best.n[1,]),xlab="Número de grupos",ylab="Número de índices")
+```
+
+Por mayoría, el mejor número de clústers es 2, apoyado por 12 índices.
+
+## Representación gráfica y análisis del resultado
+Utilizando el mismo Principal Component Analysis (PCA) que hemos realizado anteriormente, hemos extraído los dos componentes más significativos. Éstos van a formar el eje X e Y respectivamente, y sobre ellos mostramos el conjunto de datos marcados con colores distintos para representar el clúster al que pertenecen.
+
+```{r}
 ##-- 2 grupos
 km2 <- kmeans(datos2,centers=2,nstart=10)
 ve2 <- km2$betweenss/km2$totss
@@ -80,9 +111,198 @@ ve2 <- km2$betweenss/km2$totss
 pr.comp <- princomp(datos2)
 x <- pr.comp$scores[,1]
 y <- pr.comp$scores[,2]
-plot(x,y,pch=19,col=km2$cluster)
+plot(x,y,pch=19,col=km2$cluster, xlab="Componente 1",ylab="Componente 2")
 ```
 
-Vemos que la partición en dos clústers es coherente y que a simple vista no se identifican más que éstos dos. Esto nos indica que utilizando el conjunto de datos de muestra, no podemos discernir con presición entre las 6 actividades diferentes. Por éste mismo motivo, observamos la variabilidad explicada utilizando únicamente dos clústers es de 0.57, un valor bajo, y es que estamos dejando de identificar 4 categorías.
+Vemos que la partición en dos clústers es coherente y que a simple vista no se identifican más que éstos dos. Esto nos indica que utilizando el conjunto de datos de muestra, no podemos discernir con presición entre las 6 actividades diferentes. Por éste mismo motivo, observamos que la variabilidad explicada utilizando únicamente dos clústers es de 0.57, un valor bajo, y es que estamos dejando de identificar 4 categorías.
 
 # Parte II. Clustering supervisado
+Hemos dividio el conjunto de datos en dos muestras: 
+
+- Muestra de entrenamiento, para entrenar los modelos. Representa un 70% del conjunto de datos
+- Muestra de test, para analizar el rendimiento de los distintos algoritmos que utilizaremos. Representa un 30% del conjunto de datos.
+
+## 1. K-Nearest Neighbor
+```{r}
+library(deldir)
+library(kknn)
+library(class)
+
+allPredictions = data.frame(
+  'algorithm' = c('KNN', 'Bayes', 'Conditional Trees', 'Random Forests', 'SVM'),
+  'prediction capacity' = c(0,0,0,0,0)
+)
+
+d = read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
+d$subject = NULL
+
+##-- Dividir en muestra de entrenamiento y muestra test
+p <- 0.7                 # Proporcion en muestra de entrenamiento
+n <- dim(d)[1]           # numero de observaciones 
+set.seed(12345)
+train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
+train <- d[train.sel,]
+test <- d[!train.sel,]
+```
+
+Primero, ejecutamos el algoritmo utilizando diferentes valores de 'k' para encontrar el que mejor se ajusta.
+
+```{r}
+p <- c()
+K <- seq(1,21,2)
+for(k in K){
+  knn <- knn(train[,-ncol(d)], test=test[,-ncol(d)], cl=train$activity, k = k)
+  t <- table(knn,test$activity)
+  p[(k+1)/2] <- sum(diag(t))/sum(t)
+}
+plot(K,p,pch=19,type='b')
+```
+
+Vemos que `K = 3` es lo que mejor resultado da, con un `0.9622016` de capacidad predictiva.
+
+### Resumen de la ejecución:
+
+```{r echo=TRUE}
+knn <- knn(train[,-ncol(d)], test=test[,-ncol(d)], cl=train$activity, k = 3)
+t <- table(knn,test$activity)
+```
+
+- Matriz de confusión:
+```{r results=TRUE}
+t
+```
+
+- Capacidad predictiva: `0.9622016`.
+- Capacidad predictiva por clase: 
+```{r}
+barplot(diag(prop.table(t,2)))
+```
+
+A continuación hay dos variantes que probamos para intentar mejorar el resultado sin éxito.
+
+### Variante 1. ACP previo a KNN
+Reducimos la dimensionalidad del conjunto de datos previo a ejecutar el KNN y cogemos las primeras 10 componentes principales.
+
+```{r echo = TRUE}
+res.acp <- pr.comp$scores[,1:50]
+train2 <- res.acp[train.sel,]
+test2 <- res.acp[!train.sel,]
+
+K <- seq(1,21,2)
+p <- c()
+for(k in K){
+  knn <- knn(train2, test2, cl=train$activity, k = k)
+  t <- table(knn,test$activity)
+  p <- c(p,sum(diag(t))/sum(t))
+}
+plot(K,p,pch=19,type='b')
+```
+
+Mejor resultado con `K = 7` que da un `0.9429708` de capacidad predictiva. No mejora.
+
+### Variante 2. Kernel KNN
+```{r echo = TRUE}
+p <- c()
+K <- seq(1,21,2)
+for(k in K){
+  kknn <- kknn(factor(activity)~., train, test,k=k)
+  t <- table(fitted(kknn),test$activity)
+  p <- c(p,sum(diag(t))/sum(t))
+}
+plot(K,p,pch=19,type='b')
+```
+
+Mejor resultado con `K = 15` que da un `0.9522546` de capacidad predictiva. No mejora.
+
+## 2. Naive Bayes
+
+```{r}
+library(e1071)
+library(ineq)
+
+cor.matrix <- cor(d[,-c(1,length(d))])              # Matriz de correlaciones
+cor.num <- as.numeric(cor.matrix)                           # Todas las correlaciones en un vector
+t.cor <- table(cut(cor.num[cor.num!=1],br=seq(-1,1,0.1)))/2 # Categorazion de las correlaciones en intervalos de 0.1
+#barplot(t.cor)
+```
+
+```{r echo = TRUE}
+nb <- naiveBayes(activity ~ ., train)
+
+preds <- predict(nb, newdata = test)
+t <- table(preds, test$activity)
+p.acierto <- sum(diag(t))/sum(t)
+```
+
+- Matriz de confusión:
+```{r results=TRUE}
+t
+```
+
+- Capacidad predictiva: `0.8023873`. Inferior al KNN.
+- Capacidad predictiva por clase: 
+```{r}
+barplot(diag(prop.table(t,2)))
+```
+
+## 3. Árboles condicionales
+
+```{r}
+library(randomForest)
+library(party)
+library(e1071)
+```
+
+
+```{r echo=TRUE}
+ct.mod <- ctree(activity ~ ., train)                                  # Profundidad maxima
+pred <- predict(ct.mod,test,type="response")                          # prediccion de la respuesta
+t <- table(pred,test$activity)                                        # tabla de predicciones vs respuesta real
+p.acierto = sum(diag(t))/sum(t)
+```
+
+- Matriz de confusión:
+```{r results=TRUE}
+t
+```
+
+- Capacidad predictiva global: `0.9124668`
+- Capacidad predictiva por clase: 
+```{r}
+barplot(diag(prop.table(t,2)))
+```
+
+### 4. Random Forest
+ 
+```{r echo=TRUE}
+set.seed(12345)
+rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=100,do.trace=TRUE)  
+```
+
+- Resultado ejecución
+```{r results=TRUE}
+rf.mod
+```
+
+A destacar:
+  - Variables utilizadas por cada árbol generado: 23
+  - Out-of-bag error estimado: 3.52%
+
+- Matriz de confusión:
+```{r results=TRUE}
+pred.rf <- predict(rf.mod,test)
+t <- table(pred.rf,test$activity)                         # tabla de predicciones vs respuesta real
+p.acierto = sum(diag(t))/sum(t)
+t
+```
+
+- Capacidad predictiva global: `0.9602122`
+- Capacidad predictiva por clase: 
+```{r}
+barplot(diag(prop.table(t,2)))
+```
+
+Validamos que no necesitamos generar más árboles
+```{r}
+plot(rf.mod, type="l")
+```
