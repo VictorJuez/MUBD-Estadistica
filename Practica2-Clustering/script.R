@@ -23,7 +23,6 @@ getD = function() {
 #################################
 
 datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.')
-#datos = datos[1:600,]
 
 datos2 = datos;
 datos2$subject = NULL;
@@ -297,24 +296,9 @@ p.acierto3
 library(randomForest)
 library(party)
 library(e1071)
-############################################################
-# Dividir la muestra
-############################################################
-datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
-d = datos
-d$subject = NULL
-p <- 0.7                                   # Proporcion en muestra de entrenamiento
-n <- nrow(d)                               # Numero de observaciones 
-set.seed(12345)
-train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
-train <- d[train.sel,]
-test <- d[!train.sel,]
 
-############################################################
-# Visualizacion
-############################################################
 ##-- Construirlo
-ct.mod <- ctree(activity ~ ., train,controls=ctree_control(maxdepth=2)) # Poco profundo para poder graficarlo
+ct.mod <- ctree(activity ~ ., train, control = ctree_control(maxdepth=3)) # Poco profundo para poder graficarlo
 
 ##-- Visualizarlo
 plot(ct.mod,type='extended')
@@ -327,7 +311,7 @@ ct.mod <- ctree(activity ~ ., train) # Profundidad maxima
 pred <- predict(ct.mod,test,type="response")                          # prediccion de la respuesta
 (t <- table(pred,test$activity))                                        # tabla de predicciones vs respuesta real
 sum(diag(t))/sum(t)
-# 0.8885942
+# 0.9124668
 
 ############################################################
 # Capacidad predictiva por clase
@@ -368,7 +352,7 @@ plot(ct.prune); text(ct.prune,pretty =0)                # arbol podado
 pred3 <- predict (ct.prune ,test ,type="class")         # prediccion
 t3 <- table(pred3,test$activity)                          # tabla de confusion 
 sum(diag(t3))/sum(t3)                                   # porcentaje de acierto 
-# 0.882626
+# 0.882626 --> No mejora
 
 #-----------------------------------------------------------
 #
@@ -376,7 +360,7 @@ sum(diag(t3))/sum(t3)                                   # porcentaje de acierto
 #
 #-----------------------------------------------------------
 set.seed(12345)
-rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=500,do.trace=TRUE)  
+rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=100,do.trace=TRUE)  
 rf.mod
 pred.rf <- predict(rf.mod,test)
 (t <- table(pred.rf,test$activity))                         # tabla de predicciones vs respuesta real
@@ -384,14 +368,14 @@ sum(diag(t))/sum(t)
 # 0.9602122
 
 ############################################################
-# Es necesario el conjunto de entrenamiento?
+# Es necesario el conjunto de entrenamiento? -> Probablemente no
 ############################################################
 ##-- Comparacion de errores de clasificacion
 EE1 <- c(1-sum(diag(t))/sum(t),1-diag(prop.table(t,2)))    # Error de prediccion observado con muestra test (Global y por clase) --> En random forest no se necesita muestra test
 EE2 <- rf.mod$err.rate[50,]                                # Error de prediccion estimado con modelo (Global y por clase)
 plot(EE1,type='b',col=1,lwd=2,pch=15,xlab='',ylab='OOB',ylim=0:1,lty=1)
 lines(EE2,type='b',col=2,lwd=2,pch=15,xlab='',lty=2)
-legend('topright',c('OBB test','OBB RF'),col=1:2,lty=1:2,lwd=2) 
+legend('topright',c('OOB test','OOB RF'),col=1:2,lty=1:2,lwd=2) 
 
 ##-- Comparacion de la matriz de confusion
 t2 <- rf.mod$confusion
@@ -423,11 +407,11 @@ v.imp0[ord,c('walk')]
 ############################################################
 mtry.par <- tuneRF(d,d$activity)
 set.seed(12345)
-rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=200,do.trace=TRUE,mtry=184)
+rf.mod1 <- randomForest(activity~.,train,importance=TRUE,ntree=200,do.trace=TRUE,mtry=92)
 pred.rf1 <- predict(rf.mod1,test)
 (t <- table(pred.rf1,test$activity))                        
 sum(diag(t))/sum(t)   
-
+# 0.9496021 -> No mejora
 
 #-----------------------------------------------------------
 #
@@ -435,167 +419,37 @@ sum(diag(t))/sum(t)
 #
 #-----------------------------------------------------------
 
-##-- Dividir en muestra de entrenamiento y muestra test (iguales)
-p <- 0.5
-set.seed(12345)
-n0 <- 4000
-sel <- sample(1:nrow(d),n0)
-d1 <- d[sel,]
-d1$activity2 <- factor(d1$activity=='walk') # Class_1
-d1$activity <- NULL
-train.sel <- sample(c(FALSE,TRUE),n0,rep=TRUE,prob=c(1-p,p))
-train <- d1[train.sel,]
-test <- d1[!train.sel,]
-
-############################################################
-# Ajustar modelo
-############################################################
-mod.svm <- svm(activity2~.,data = train,cost=1)
-
-############################################################
-# Capacidad predictiva
-############################################################
-pr <- predict(mod.svm,test)
-t <- table(pr,test$target2)
-sum(diag(t))/sum(t)
-t
-
-############################################################
-# Tunear
-############################################################
-##-- Tunear el parametro de sobreajuste (cost)
-mod.tune <- tune(svm,activity2~.,data=train,kernel="linear",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
-summary(mod.tune)
-mod.tune$best.parameters
-
-##-- Escoger el mejor modelo
-mod.best <- mod.tune$best.model
-summary(mod.best)
-
-############################################################
-# Capacidad predictiva
-############################################################
-pr <- predict(mod.best,test)
-t <- table(pr,test$activity2)
-t
-sum(diag(t))/sum(t)
-
-############################################################
-# Kernels polynomial
-############################################################
-mod.tune1 <- tune(svm,activity2~.,data=train,kernel="polynomial",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
-summary(mod.tune1)
-mod.best1 <- mod.tune1$best.model
-
-############################################################
-# Capacidad predictiva
-############################################################
-pr <- predict(mod.best1,test)
-t <- table(pr,test$activity2)
-sum(diag(t))/sum(t)
-
-############################################################
-# Kernel radial
-############################################################
-mod.tune2 <- tune(svm,activity2~.,data=train,kernel="radial",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
-summary(mod.tune2)
-mod.best2 <- mod.tune2$best.model
-
-############################################################
-# Capacidad predictiva
-############################################################
-pr <- predict(mod.best2,test)
-t <- table(pr,test$target2)
-sum(diag(t))/sum(t)
-
 ############################################################
 # Que kernel escoger?
 ############################################################
-mod.tune3 <- tune(svm,activity2~.,data=train,cost=1,ranges=list(kernel=c('linear','polynomial','radial','sigmoid')))
-summary(mod.tune3)
-mod.best3 <- mod.tune3$best.model
+pr.comp = princomp(d[,-ncol(d)])
+d2 = as.data.frame(pr.comp$scores[,1:10])
+d2$activity = d$activity[1:nrow(d2)]
 
-
-############################################################
-# Capacidad predictiva
-############################################################
-pr <- predict(mod.best3,test)
-t <- table(pr,test$activity2)
-t
-sum(diag(t))/sum(t)
-
-######## all classes
-##-- 1. Mejora la capacidad predictiva en la clasificacion de todas las clases usando la funcion "tune" 
-## (Prueba con un numero ligeramente mayor de filas)
-d = getD()
-p <- 0.5
+p <- 0.7                 # Proporcion en muestra de entrenamiento
+n <- dim(d2)[1]           # numero de observaciones 
 set.seed(12345)
-train.sel <- sample(c(FALSE,TRUE),nrow(d),rep=TRUE,prob=c(1-p,p))
-test <- d[train.sel,]
-train <- d[!train.sel,]
+train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
+train2 <- d2[train.sel,]
+test2 <- d2[!train.sel,]
 
-## Generacion modelo
-mod.svm <- svm(activity~.,data = train,cost=1)
-
-## Capacidad predictiva
-pr <- predict(mod.svm,test)
-t <- table(pr,test$activity)
-sum(diag(t))/sum(t)
-t
-
-
-## Tunear modelo
-mod.tune <- tune(svm,activity~.,data=train,kernel="linear",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
-summary(mod.tune)
-mod.tune$best.parameters
-
-##-- Escoger el mejor modelo
-mod.best <- mod.tune$best.model
-summary(mod.best)
-
-## Capacidad predictiva
-pr <- predict(mod.best,test)
-t <- table(pr,test$activity)
-sum(diag(t))/sum(t)
-# 0.9798658
-t
-
-############################################################
-# Que kernel escoger?
-############################################################
-mod.tune2 <- tune(svm,activity~.,
-                  data = train,
+mod.tune <- tune(svm,activity~.,
+                  data = d2,
                   ranges = list(kernel = c('linear','polynomial','radial','sigmoid'),
                                 cost = c(0.01,0.2,0.1,1,5,10,100)))
-summary(mod.tune2)
-mod.best <- mod.tune2$best.model
+summary(mod.tune)
+mod.best <- mod.tune$best.model
 
 
 ############################################################
 # Capacidad predictiva
 ############################################################
-pr <- predict(mod.best,test)
-t <- table(pr,test$activity)
-t
-sum(diag(t))/sum(t)
-# 0.9790762
-
-## Modelo manual
-mod.svm <- svm(activity~.,data = train, cost=10, kernel='linear')
+mod.svm <- svm(activity~.,data = train, cost=10, kernel='radial')
 
 pr <- predict(mod.svm,test)
 t <- table(pr,test$activity)
 sum(diag(t))/sum(t)
-# d kernel = radial cost = 10 => 0.9988
-# d kernel = linear cost = 10 => 0.9948
-# d kernel = radial cost = 15 => 0.9992
-
-# train kernel = radial cost = 10 => 0.984739 
-# cost = 15 => 0.9839357
-# cost = 5 => 0.9831325
-
-
-mod.tune <- tune(svm,activity~.,data=train,kernel="radial",ranges=list(cost=c(0.01,0.2,0.1,1,5,10,100)))
+# 0.9801061
 
 
 #### FINAL PREDICT
@@ -605,34 +459,3 @@ pr <- predict(mod.svm,datosTest)
 
 nombre_objeto <- data.frame(activity=pr) # pr: predicciones 
 write.table(nombre_objeto, 'svm_radial_15.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
-
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-
-# Extra
-#######
-# Escalamos los datos
-minValue = min(datos) * -1
-datos2 = scale(log(datos+ minValue + 1))
-
-
-## Imputacion multiple para los datos ausentes
-#library(mice)
-#tempData = mice(datos, m=5,maxit=50,meth='pmm',seed=500)
-#summary(tempData)
-
-# K=5
-
-# ACP
-library(Amelia)
-#missing(datos)
-#cor(datos)
-cli = prcomp(datos, scale=TRUE, center=TRUE)
-#plot(cli)
-principales = cli$x
-principales = principales[,1:50]
-#head(principales)
