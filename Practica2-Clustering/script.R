@@ -88,9 +88,11 @@ library(deldir)
 library(kknn)
 library(class)
 
-############################################################
-# Leer e inspeccionar los datos
-############################################################
+allPredictions = data.frame(
+  'algorithm' = c('KNN', 'Bayes', 'Conditional Trees', 'Random Forests', 'SVM'),
+  'prediction capacity' = c(0,0,0,0,0)
+)
+
 d = read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
 d$subject = NULL
 
@@ -101,15 +103,6 @@ set.seed(12345)
 train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
 train <- d[train.sel,]
 test <- d[!train.sel,]
-
-############################################################
-# Comparar capacidad predictiva 
-############################################################
-##-- 1-NN Cross-validation
-knn2 <- knn.cv(d[,-ncol(d)], cl=d$activity, k = 1)
-t <- table(knn2,d$activity)
-sum(diag(t))/sum(t)
-## TODO: que validamos?
 
 ############################################################
 # Numero de grupos
@@ -126,13 +119,13 @@ plot(K,p,pch=19,type='b')
 cbind(K,p)
 ## K = 3 da el mejor resultado => 0.9622016
 
+
 ############################################################
 # Usar ACP --> Reduccion dimensionalidad previo a KNN
 ############################################################
 res.acp <- pr.comp$scores[,1:50]
 train2 <- res.acp[train.sel,]
 test2 <- res.acp[!train.sel,]
-
 
 K <- seq(1,21,2)
 p <- c()
@@ -170,6 +163,9 @@ for(k in K){
 plot(K,p,pch=19,type='b')
 cbind(K,p)
 ## Maximum k=15 => 0.9522546 ==> NO mejora
+
+## Guardamos el mejor resultado de KNN
+allPredictions$prediction.capacity[1] = p[2]
 
 ############################################################
 #
@@ -218,7 +214,7 @@ graphics.off()                  # Cerrar ventanas
 nbt <- nb$tables                # Tablas con medias
 var.imp <- c()                  # Gini
 
-##-- Calcular indice y graficar distribucion
+##-- Calcular indice
 for (i in 1:(ncol(d)-1)){
   x <- nbt[[i]][,1]
   var.imp[i] <- ineq(x)        # GINI         
@@ -254,7 +250,7 @@ preds1 <- predict(nb1, newdata = test)
 t <- table(preds1, test$activity)
 p.acierto1 <- sum(diag(t))/sum(t)
 p.acierto1
-# 0.8322281
+# 0.8322281 => Mejora levemente
 
 ############################################################
 # Intento de mejora 2: Quitar variables correlacionadas
@@ -262,7 +258,6 @@ p.acierto1
 ##-- Sistema 1: Correlaciones grandes
 high.corr <- which(cor.matrix>0.8,arr.ind = TRUE)
 t.high.corr <- sort(table(as.numeric(high.corr))/2,decreasing=TRUE)
-t.high.corr
 sel.rm <- names(t.high.corr)[t.high.corr>=2] 
 train2 <- train[,-which(names(train) %in% paste0('feat',sel.rm))]
 
@@ -272,11 +267,10 @@ preds <- predict(nb2, newdata = test)
 t <- table(preds, test$activity)
 p.acierto2 <- sum(diag(t))/sum(t)
 p.acierto2
-# 0.7758621
+# 0.7758621 => Empeora
 
 ##-- Sistema 2: Suma de correlaciones
 cor.sum <- sort(apply(cor.matrix,2,sum),decreasing=TRUE)
-cor.sum
 sel.rm <- names(cor.sum)[1:30]
 train3 <- train[,-which(names(train) %in% sel.rm)]
 
@@ -287,6 +281,9 @@ t <- table(preds, test$activity)
 p.acierto3 <- sum(diag(t))/sum(t)
 p.acierto3
 # 0.8083554
+
+## Guardamos el mejor resultado de Bayes
+allPredictions$prediction.capacity[2] = p.acierto1
 
 #-----------------------------------------------------------
 #
@@ -310,7 +307,7 @@ plot(ct.mod,type='simple')
 ct.mod <- ctree(activity ~ ., train) # Profundidad maxima
 pred <- predict(ct.mod,test,type="response")                          # prediccion de la respuesta
 (t <- table(pred,test$activity))                                        # tabla de predicciones vs respuesta real
-sum(diag(t))/sum(t)
+p.acierto = sum(diag(t))/sum(t)
 # 0.9124668
 
 ############################################################
@@ -354,6 +351,9 @@ t3 <- table(pred3,test$activity)                          # tabla de confusion
 sum(diag(t3))/sum(t3)                                   # porcentaje de acierto 
 # 0.882626 --> No mejora
 
+## Guardamos el mejor resultado de Conditional Trees
+allPredictions$prediction.capacity[3] = p.acierto
+
 #-----------------------------------------------------------
 #
 # Random forest
@@ -364,7 +364,7 @@ rf.mod <- randomForest(activity~.,train,importance=TRUE,ntree=100,do.trace=TRUE)
 rf.mod
 pred.rf <- predict(rf.mod,test)
 (t <- table(pred.rf,test$activity))                         # tabla de predicciones vs respuesta real
-sum(diag(t))/sum(t)
+p.acierto = sum(diag(t))/sum(t)
 # 0.9602122
 
 ############################################################
@@ -413,6 +413,9 @@ pred.rf1 <- predict(rf.mod1,test)
 sum(diag(t))/sum(t)   
 # 0.9496021 -> No mejora
 
+## Guardamos el mejor resultado de Conditional Trees
+allPredictions$prediction.capacity[4] = p.acierto
+
 #-----------------------------------------------------------
 #
 # SVM
@@ -420,42 +423,54 @@ sum(diag(t))/sum(t)
 #-----------------------------------------------------------
 
 ############################################################
-# Que kernel escoger?
+# Analisis de parametros
 ############################################################
+# Reduccion de dimensionalidad de los datos haciendo ACP, debido al alto coste computacional de la funcion tune()
+# Utilizamos los 10 componentes principales
 pr.comp = princomp(d[,-ncol(d)])
 d2 = as.data.frame(pr.comp$scores[,1:10])
 d2$activity = d$activity[1:nrow(d2)]
 
-p <- 0.7                 # Proporcion en muestra de entrenamiento
-n <- dim(d2)[1]           # numero de observaciones 
-set.seed(12345)
-train.sel <- sample(c(FALSE,TRUE),n,rep=TRUE,prob=c(1-p,p))
-train2 <- d2[train.sel,]
-test2 <- d2[!train.sel,]
-
+# tune() ejecuta el svm para todas las combinaciones de kernels y costes especificados.
+# Ademas lo hace con Cross Validation (10-fold) por lo que no tenemos que hacer particion de datos train/test
 mod.tune <- tune(svm,activity~.,
                   data = d2,
                   ranges = list(kernel = c('linear','polynomial','radial','sigmoid'),
                                 cost = c(0.01,0.2,0.1,1,5,10,100)))
 summary(mod.tune)
-mod.best <- mod.tune$best.model
-
+# Best parameters: Kernel = radial, cost = 10
+# best performance: 0.0814 
 
 ############################################################
 # Capacidad predictiva
 ############################################################
+# Utilizamos la configuracion obtenida en el ananlisis anterior y lo ejecutamos con los datos train sin la transformacion ACP con todas las categorias
 mod.svm <- svm(activity~.,data = train, cost=10, kernel='radial')
 
 pr <- predict(mod.svm,test)
 t <- table(pr,test$activity)
-sum(diag(t))/sum(t)
+p.acierto = sum(diag(t))/sum(t)
 # 0.9801061
 
+## Guardamos el mejor resultado de Conditional Trees
+allPredictions$prediction.capacity[5] = p.acierto
 
-#### FINAL PREDICT
+############################################################
+# Final Predict - SVM kernel = radial, cost = 10
+############################################################
+
+## Mejor algoritmo
+allPredictions
+## SVM
+
+datos <- read.table('Datos de entrenamiento.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
+datos$subject = NULL
+
 datosTest <- read.table('Datos Test.txt',header=TRUE,sep='\t', dec = '.', stringsAsFactors = TRUE)
 datosTest$subject = NULL
+
+mod.svm <- svm(activity~., data = datos, cost=10, kernel='radial')
 pr <- predict(mod.svm,datosTest)
 
-nombre_objeto <- data.frame(activity=pr) # pr: predicciones 
-write.table(nombre_objeto, 'svm_radial_15.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
+result <- data.frame(activity=pr) # pr: predicciones 
+write.table(result, 'p2.txt', row.names = FALSE, col.names = TRUE, sep='\t', quote = FALSE)
