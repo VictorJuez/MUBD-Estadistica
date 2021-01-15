@@ -14,4 +14,4 @@ MUBD-Estadistica-2020/21
   - [Sesion 5](sesion5/informe.md)
   - [Sesion 6](sesion6y7/MUBD-4.2-Clustering-supervisado-I.pdf)
   - [Sesion 7](sesion6y7/MUBD-4.3-Clustering-supervisado-II.pdf)
-  - [Sesion 8](sesion5/s8.R)
+  - [Sesion 8](sesion8/s8.R)
